@@ -14,7 +14,7 @@ end
 local function downloadFile(path, func)
 	if not isfile(path) then
 		local suc, res = pcall(function()
-			return game:HttpGet('https://raw.githubusercontent.com/7GrandDadPGN/VapeV4ForRoblox/'..readfile('newvape/profiles/commit.txt')..'/'..select(1, path:gsub('newvape/', '')), true)
+			return game:HttpGet('https://raw.githubusercontent.com/MOONCoreDev/UDVapeV4ForRoblox/'..readfile('newvape/profiles/commit.txt')..'/'..select(1, path:gsub('newvape/', '')), true)
 		end)
 		if not suc or res == '404: Not Found' then
 			error(res)
@@ -7056,6 +7056,42 @@ run(function()
 	})
 	Texture = Cape:CreateTextBox({
 		Name = 'Texture'
+	})
+end)
+
+run(function()
+	local Chat
+
+	Chat = vape.Legit:CreateModule({
+		Name = 'Chat',
+		Function = function(callback)
+			if callback then
+				if textChatService.ChatVersion == Enum.ChatVersion.TextChatService then
+					if not textChatService.ChatWindowConfiguration.Enabled then
+						textChatService.ChatWindowConfiguration.Enabled = true
+					end
+
+					Chat:Clean(textChatService.ChatWindowConfiguration:GetPropertyChangedSignal('Enabled'):Connect(function()
+						if not textChatService.ChatWindowConfiguration.Enabled then
+							textChatService.ChatWindowConfiguration.Enabled = true
+						end
+					end))
+				else
+					if not lplr.PlayerGui.Chat.Frame.ChatChannelParentFrame.Visible then
+						lplr.PlayerGui.Chat.Frame.ChatChannelParentFrame.Visible = true
+						lplr.PlayerGui.Chat.Frame.ChatBarParentFrame.Position = lplr.PlayerGui.Chat.Frame.ChatChannelParentFrame.Position + UDim2.new(UDim.new(), lplr.PlayerGui.Chat.Frame.ChatChannelParentFrame.Size.Y)
+					end
+
+					Chat:Clean(lplr.PlayerGui.Chat.Frame.ChatChannelParentFrame:GetPropertyChangedSignal('Visible'):Connect(function()
+						if not lplr.PlayerGui.Chat.Frame.ChatChannelParentFrame.Visible then
+							lplr.PlayerGui.Chat.Frame.ChatChannelParentFrame.Visible = true
+							lplr.PlayerGui.Chat.Frame.ChatBarParentFrame.Position = lplr.PlayerGui.Chat.Frame.ChatChannelParentFrame.Position + UDim2.new(UDim.new(), lplr.PlayerGui.Chat.Frame.ChatChannelParentFrame.Size.Y)
+						end
+					end))
+				end
+			end
+		end,
+		Tooltip = 'Enabled chat in game.'
 	})
 end)
 	
