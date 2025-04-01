@@ -14,7 +14,7 @@ end
 local function downloadFile(path, func)
 	if not isfile(path) then
 		local suc, res = pcall(function()
-			return game:HttpGet('https://raw.githubusercontent.com/MOONCoreDev/UDVapeV4ForRoblox/'..readfile('newvape/profiles/commit.txt')..'/'..select(1, path:gsub('newvape/', '')), true)
+			return game:HttpGet('https://raw.githubusercontent.com/MOONCoreDev/UDVapeV4ForRoblox/'..readfile('newvapeud/profiles/commit.txt')..'/'..select(1, path:gsub('newvapeud/', '')), true)
 		end)
 		if not suc or res == '404: Not Found' then
 			error(res)
@@ -72,7 +72,7 @@ local function addBlur(parent)
 	blur.Size = UDim2.new(1, 89, 1, 52)
 	blur.Position = UDim2.fromOffset(-48, -31)
 	blur.BackgroundTransparency = 1
-	blur.Image = getcustomasset('newvape/assets/new/blur.png')
+	blur.Image = getcustomasset('newvapeud/assets/new/blur.png')
 	blur.ScaleType = Enum.ScaleType.Slice
 	blur.SliceCenter = Rect.new(52, 31, 261, 502)
 	blur.Parent = parent
@@ -219,9 +219,9 @@ local function motorMove(target, cf)
 	task.delay(0, part.Destroy, part)
 end
 
-local hash = loadstring(downloadFile('newvape/libraries/hash.lua'), 'hash')()
-local prediction = loadstring(downloadFile('newvape/libraries/prediction.lua'), 'prediction')()
-entitylib = loadstring(downloadFile('newvape/libraries/entity.lua'), 'entitylibrary')()
+local hash = loadstring(downloadFile('newvapeud/libraries/hash.lua'), 'hash')()
+local prediction = loadstring(downloadFile('newvapeud/libraries/prediction.lua'), 'prediction')()
+entitylib = loadstring(downloadFile('newvapeud/libraries/entity.lua'), 'entitylibrary')()
 local whitelist = {
 	alreadychecked = {},
 	customtags = {},
@@ -577,7 +577,7 @@ run(function()
 
 		if not first or whitelist.textdata ~= whitelist.olddata then
 			if not first then
-				whitelist.olddata = isfile('newvape/profiles/whitelist.json') and readfile('newvape/profiles/whitelist.json') or nil
+				whitelist.olddata = isfile('newvapeud/profiles/whitelist.json') and readfile('newvapeud/profiles/whitelist.json') or nil
 			end
 
 			local suc, res = pcall(function()
@@ -624,7 +624,7 @@ run(function()
 				end
 				whitelist.olddata = whitelist.textdata
 				pcall(function()
-					writefile('newvape/profiles/whitelist.json', whitelist.textdata)
+					writefile('newvapeud/profiles/whitelist.json', whitelist.textdata)
 				end)
 			end
 
@@ -3502,7 +3502,7 @@ run(function()
 		EntityArrow.BackgroundTransparency = 1
 		EntityArrow.BorderSizePixel = 0
 		EntityArrow.Visible = false
-		EntityArrow.Image = getcustomasset('newvape/assets/new/arrowmodule.png')
+		EntityArrow.Image = getcustomasset('newvapeud/assets/new/arrowmodule.png')
 		EntityArrow.ImageColor3 = entitylib.getEntityColor(ent) or Color3.fromHSV(Color.Hue, Color.Sat, Color.Value)
 		EntityArrow.Parent = Folder
 		Reference[ent] = EntityArrow
@@ -5198,7 +5198,7 @@ run(function()
 	
 	Radar = vape:CreateOverlay({
 		Name = 'Radar',
-		Icon = getcustomasset('newvape/assets/new/radaricon.png'),
+		Icon = getcustomasset('newvapeud/assets/new/radaricon.png'),
 		Size = UDim2.fromOffset(14, 14),
 		Position = UDim2.fromOffset(12, 13),
 		Function = function(callback)
@@ -5415,7 +5415,7 @@ run(function()
 	
 	SessionInfo = vape:CreateOverlay({
 		Name = 'Session Info',
-		Icon = getcustomasset('newvape/assets/new/textguiicon.png'),
+		Icon = getcustomasset('newvapeud/assets/new/textguiicon.png'),
 		Size = UDim2.fromOffset(16, 12),
 		Position = UDim2.fromOffset(12, 14),
 		Function = function(callback)
@@ -5995,7 +5995,11 @@ run(function()
 				AutoRejoin:Clean(guiService.ErrorMessageChanged:Connect(function(str)
 					if (not check or guiService:GetErrorCode() ~= Enum.ConnectionError.DisconnectLuaKick) and guiService:GetErrorCode() ~= Enum.ConnectionError.DisconnectConnectionLost and not str:lower():find('ban') then
 						check = true
-						serverHop(nil, Sort.Value)
+						if Sort.Value == 'Rejoin' then
+							teleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId)
+						else
+							serverHop(nil, Sort.Value)
+						end
 					end
 				end))
 			end
@@ -6004,7 +6008,7 @@ run(function()
 	})
 	Sort = AutoRejoin:CreateDropdown({
 		Name = 'Sort',
-		List = {'Descending', 'Ascending'},
+		List = {'Rejoin', 'Descending', 'Ascending'},
 		Tooltip = 'Descending - Prefers full servers\nAscending - Prefers empty servers'
 	})
 end)
@@ -7916,6 +7920,4 @@ run(function()
 			end
 		end
 	})
-	
 end)
-	
