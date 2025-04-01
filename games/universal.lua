@@ -6004,7 +6004,7 @@ run(function()
 				end))
 			end
 		end,
-		Tooltip = 'Automatically rejoins into a new server if you get disconnected / kicked'
+		Tooltip = 'Automatically rejoins into old server or new server if you get disconnected / kicked'
 	})
 	Sort = AutoRejoin:CreateDropdown({
 		Name = 'Sort',
