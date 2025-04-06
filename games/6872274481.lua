@@ -72,7 +72,7 @@ local function addBlur(parent)
 	blur.Size = UDim2.new(1, 89, 1, 52)
 	blur.Position = UDim2.fromOffset(-48, -31)
 	blur.BackgroundTransparency = 1
-	blur.Image = getcustomasset('newvapeud/assets/new/blur.png')
+	blur.Image = getcustomasset('newvape/assets/new/blur.png')
 	blur.ScaleType = Enum.ScaleType.Slice
 	blur.SliceCenter = Rect.new(52, 31, 261, 502)
 	blur.Parent = parent
@@ -714,18 +714,18 @@ run(function()
 	})
 
 	local remoteNames = {
-		AckKnockback = debug.getproto(debug.getproto(Knit.Controllers.KnockbackController.KnitStart, 1), 1),
+		--AckKnockback = debug.getproto(debug.getproto(Knit.Controllers.KnockbackController.KnitStart, 1), 1),
 		AfkStatus = debug.getproto(Knit.Controllers.AfkController.KnitStart, 1),
 		AttackEntity = Knit.Controllers.SwordController.sendServerRequest,
 		BeePickup = Knit.Controllers.BeeNetController.trigger,
-		ConsumeBattery = debug.getproto(debug.getproto(Knit.Controllers.BatteryController.KnitStart, 1), 1),
+		--ConsumeBattery = debug.getproto(debug.getproto(Knit.Controllers.BatteryController.KnitStart, 1), 1),
 		CannonAim = debug.getproto(Knit.Controllers.CannonController.startAiming, 5),
 		CannonLaunch = Knit.Controllers.CannonHandController.launchSelf,
 		ConsumeItem = debug.getproto(Knit.Controllers.ConsumeController.onEnable, 1),
 		ConsumeSoul = Knit.Controllers.GrimReaperController.consumeSoul,
 		ConsumeTreeOrb = debug.getproto(Knit.Controllers.EldertreeController.createTreeOrbInteraction, 1),
 		DepositPinata = debug.getproto(debug.getproto(Knit.Controllers.PiggyBankController.KnitStart, 2), 5),
-		DragonBreath = debug.getproto(Knit.Controllers.VoidDragonController.KnitStart, 4),
+		--DragonBreath = debug.getproto(Knit.Controllers.VoidDragonController.KnitStart, 4),
 		DragonEndFly = debug.getproto(Knit.Controllers.VoidDragonController.flapWings, 1),
 		DragonFly = Knit.Controllers.VoidDragonController.flapWings,
 		DropItem = Knit.Controllers.ItemDropController.dropItemInHand,
@@ -733,18 +733,18 @@ run(function()
 		FireProjectile = debug.getupvalue(Knit.Controllers.ProjectileController.launchProjectileWithValues, 2),
 		GroundHit = Knit.Controllers.FallDamageController.KnitStart,
 		GuitarHeal = Knit.Controllers.GuitarController.performHeal,
-		HannahKill = debug.getproto(debug.getproto(Knit.Controllers.HannahController.KnitStart, 2), 1),
+		--HannahKill = debug.getproto(debug.getproto(Knit.Controllers.HannahController.KnitStart, 2), 1),
 		HarvestCrop = debug.getproto(debug.getproto(Knit.Controllers.CropController.KnitStart, 4), 1),
-		KaliyahPunch = debug.getproto(debug.getproto(Knit.Controllers.DragonSlayerController.KnitStart, 2), 1),
+		--KaliyahPunch = debug.getproto(debug.getproto(Knit.Controllers.DragonSlayerController.KnitStart, 2), 1),
 		MageSelect = debug.getproto(Knit.Controllers.MageController.registerTomeInteraction, 1),
 		MinerDig = debug.getproto(Knit.Controllers.MinerController.setupMinerPrompts, 1),
 		PickupItem = Knit.Controllers.ItemDropController.checkForPickup,
-		PickupMetal = debug.getproto(debug.getproto(Knit.Controllers.MetalDetectorController.KnitStart, 1), 2),
+		--PickupMetal = debug.getproto(debug.getproto(Knit.Controllers.MetalDetectorController.KnitStart, 1), 2),
 		ReportPlayer = require(lplr.PlayerScripts.TS.controllers.global.report['report-controller']).default.reportPlayer,
 		ResetCharacter = debug.getproto(Knit.Controllers.ResetController.createBindable, 1),
-		SpawnRaven = Knit.Controllers.RavenController.spawnRaven,
+		--SpawnRaven = Knit.Controllers.RavenController.spawnRaven,
 		SummonerClawAttack = Knit.Controllers.SummonerClawController.attack,
-		WarlockTarget = debug.getproto(Knit.Controllers.WarlockStaffController.KnitStart, 3)
+		--WarlockTarget = debug.getproto(Knit.Controllers.WarlockStaffController.KnitStart, 3)
 	}
 
 	local function dumpRemote(tab)
@@ -1950,7 +1950,8 @@ run(function()
 		end
 	})
 end)
-	
+
+--[[
 run(function()
 	local Value
 	local VerticalValue
@@ -2167,7 +2168,7 @@ run(function()
 		Name = 'Wall Check',
 		Default = true
 	})
-end)
+end)]]
 	
 run(function()
 	vape.Categories.Blatant:CreateModule({
@@ -2894,7 +2895,8 @@ run(function()
 		Name = 'Camera Direction'
 	})
 end)
-	
+
+--[[
 run(function()
 	vape.Categories.Blatant:CreateModule({
 		Name = 'NoFall',
@@ -2905,7 +2907,7 @@ run(function()
 		end,
 		Tooltip = 'Prevents taking fall damage.'
 	})
-end)
+end)]]
 	
 run(function()
 	local old
@@ -4053,7 +4055,7 @@ run(function()
 	end
 	
 	local AutoKitFunctions = {
-		battery = function()
+		--[[battery = function()
 			repeat
 				if entitylib.isAlive then
 					local localPosition = entitylib.character.RootPart.Position
@@ -4068,7 +4070,7 @@ run(function()
 				end
 				task.wait(0.1)
 			until not AutoKit.Enabled
-		end,
+		end,]]
 		beekeeper = function()
 			kitCollection('bee', function(v)
 				bedwars.Client:Get(remotes.BeePickup):SendToServer({beeId = v:GetAttribute('BeeId')})
@@ -4186,9 +4188,10 @@ run(function()
 				bedwars.LaunchPadController.attemptLaunch = old
 			end)
 		end,
+
 		hannah = function()
 			kitCollection('HannahExecuteInteraction', function(v)
-				local billboard = bedwars.Client:Get(remotes.HannahKill):CallServer({
+				local billboard = replicatedStorage.rbxts_include.node_modules['@rbxts'].net.out.NetManaged.HannahPromptTrigger:InvokeServer({
 					user = lplr,
 					victimEntity = v
 				}) and v:FindFirstChild('Hannah Execution Icon')
@@ -6288,7 +6291,7 @@ run(function()
 		close.Position = UDim2.new(1, -35, 0, 9)
 		close.BackgroundColor3 = Color3.new(1, 1, 1)
 		close.BackgroundTransparency = 1
-		close.Image = getcustomasset('newvapeud/assets/new/close.png')
+		close.Image = getcustomasset('newvape/assets/new/close.png')
 		close.ImageColor3 = color.Light(uipallet.Text, 0.2)
 		close.ImageTransparency = 0.5
 		close.AutoButtonColor = false
@@ -6402,7 +6405,7 @@ run(function()
 		searchicon.Size = UDim2.fromOffset(14, 14)
 		searchicon.Position = UDim2.new(1, -26, 0, 8)
 		searchicon.BackgroundTransparency = 1
-		searchicon.Image = getcustomasset('newvapeud/assets/new/search.png')
+		searchicon.Image = getcustomasset('newvape/assets/new/search.png')
 		searchicon.ImageColor3 = color.Light(uipallet.Main, 0.37)
 		searchicon.Parent = searchbkg
 		local children = Instance.new('ScrollingFrame')
@@ -6543,7 +6546,7 @@ run(function()
 		textbuttonicon.Position = UDim2.fromScale(0.5, 0.5)
 		textbuttonicon.AnchorPoint = Vector2.new(0.5, 0.5)
 		textbuttonicon.BackgroundTransparency = 1
-		textbuttonicon.Image = getcustomasset('newvapeud/assets/new/add.png')
+		textbuttonicon.Image = getcustomasset('newvape/assets/new/add.png')
 		textbuttonicon.ImageColor3 = Color3.fromHSV(0.46, 0.96, 0.52)
 		textbuttonicon.Parent = textbutton
 		local childrenlist = Instance.new('Frame')
@@ -6636,7 +6639,7 @@ run(function()
 			close.Position = UDim2.new(1, -23, 0, 6)
 			close.BackgroundColor3 = Color3.new(1, 1, 1)
 			close.BackgroundTransparency = 1
-			close.Image = getcustomasset('newvapeud/assets/new/closemini.png')
+			close.Image = getcustomasset('newvape/assets/new/closemini.png')
 			close.ImageColor3 = color.Light(uipallet.Text, 0.2)
 			close.ImageTransparency = 0.5
 			close.AutoButtonColor = false
@@ -7100,7 +7103,7 @@ run(function()
 						Size = UDim2.new(1, 89, 1, 52),
 						Position = UDim2.fromOffset(-48, -31),
 						BackgroundTransparency = 1,
-						Image = getcustomasset('newvapeud/assets/new/blur.png'),
+						Image = getcustomasset('newvape/assets/new/blur.png'),
 						ScaleType = Enum.ScaleType.Slice,
 						SliceCenter = Rect.new(52, 31, 261, 502)
 					}),
@@ -8376,4 +8379,3 @@ run(function()
 		List = WinEffectName
 	})
 end)
-	
