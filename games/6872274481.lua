@@ -1495,7 +1495,7 @@ run(function()
 			if callback then
 				old = bedwars.KnockbackUtil.applyKnockback
 				bedwars.KnockbackUtil.applyKnockback = function(root, mass, dir, knockback, ...)
-					if rand:NextNumber(0, 100) > Chance.Value then return end
+					if rand:NextNumber(0, 100) > Chance.Value then return old(root, mass, dir, knockback, ...) end
 					local check = (not TargetCheck.Enabled) or entitylib.EntityPosition({
 						Range = 50,
 						Part = 'RootPart',
