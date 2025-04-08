@@ -6186,6 +6186,13 @@ local textguiwatermark = textgui:CreateToggle({
 		mainapi:UpdateTextGUI()
 	end
 })
+local textguicorners = textgui:CreateToggle({
+	Name = 'Use Corners',
+	Tooltip = 'Renders a vape watermark',
+	Function = function()
+		mainapi:UpdateTextGUI()
+	end
+})
 local textguibackgroundtransparency = {
 	Value = 0.5,
 	Object = {Visible = {}}
@@ -6705,11 +6712,30 @@ function mainapi:UpdateTextGUI(afterload)
 					holderline2.Name = 'Line'
 					holderline2.Position = UDim2.new()
 					holderline2.Parent = holderbackground
-					holdercolorline = Instance.new('Frame')
-					holdercolorline.Size = UDim2.new(0, 2, 1, 0)
-					holdercolorline.Position = right and UDim2.new(1, -5, 0, 0) or UDim2.new()
-					holdercolorline.BorderSizePixel = 0
-					holdercolorline.Parent = holderbackground
+					if textguicorners.Enabled then
+						holderline.Visible = false
+						holderbackground.Position = UDim2.fromOffset(-5, 0)
+						
+						local cornerLine = Instance.new('ImageLabel', holderbackground)
+						cornerLine.ImageColor3 = Color3.fromRGB(47, 122, 229)
+						cornerLine.BorderColor3 = Color3.fromRGB(0, 0, 0)
+						cornerLine.Size = UDim2.new(0, 4, 0.9, 0)
+						cornerLine.AnchorPoint = Vector2.new(0, 0.5)
+						cornerLine.Image = 'rbxassetid://73104725656509'
+						cornerLine.BackgroundTransparency = 1
+						cornerLine.Position = UDim2.new(1, 0, 0.5, 0)
+						cornerLine.ZIndex = -1
+						cornerLine.BorderSizePixel = 0
+						cornerLine.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+
+						holdercolorline = cornerLine
+					else
+						holdercolorline = Instance.new('Frame')
+						holdercolorline.Size = UDim2.new(0, 2, 1, 0)
+						holdercolorline.Position = right and UDim2.new(1, -5, 0, 0) or UDim2.new()
+						holdercolorline.BorderSizePixel = 0
+						holdercolorline.Parent = holderbackground
+					end
 				end
 				local holdertext = Instance.new('TextLabel')
 				holdertext.Position = UDim2.fromOffset(right and 3 or 6, 2)
