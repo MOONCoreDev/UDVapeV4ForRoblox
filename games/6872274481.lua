@@ -689,9 +689,10 @@ run(function()
 		KillFeedController = Flamework.resolveDependency('client/controllers/game/kill-feed/kill-feed-controller@KillFeedController'),
 		Knit = Knit,
 		KnockbackUtil = require(replicatedStorage.TS.damage['knockback-util']).KnockbackUtil,
-		NametagController = Knit.Controllers.NametagController,
 		MatchEndScreenController = Flamework.resolveDependency('client/controllers/game/match/match-end-screen-controller@MatchEndScreenController'),
 		MageKitUtil = require(replicatedStorage.TS.games.bedwars.kit.kits.mage['mage-kit-util']).MageKitUtil,
+		NametagController = Knit.Controllers.NametagController,
+		NetworkLib = require(lplr.PlayerScripts.TS.lib.network),
 		ProjectileMeta = require(replicatedStorage.TS.projectile['projectile-meta']).ProjectileMeta,
 		QueryUtil = require(replicatedStorage['rbxts_include']['node_modules']['@easy-games']['game-core'].out).GameQueryUtil,
 		QueueCard = require(lplr.PlayerScripts.TS.controllers.global.queue.ui['queue-card']).QueueCard,
@@ -1009,7 +1010,7 @@ run(function()
 	local storeChanged = bedwars.Store.changed:connect(updateStore)
 	updateStore(bedwars.Store:getState(), {})
 
-	for _, event in {'MatchEndEvent', 'EntityDeathEvent', 'EntityDamageEvent', 'BedwarsBedBreak', 'BalloonPopped', 'AngelProgress', 'GrapplingHookFunctions'} do
+	for _, event in {'MatchEndEvent', 'EntityDeathEvent', 'BedwarsBedBreak', 'BalloonPopped', 'AngelProgress', 'GrapplingHookFunctions'} do
 		if not vape.Connections then return end
 		bedwars.Client:WaitFor(event):andThen(function(connection)
 			vape:Clean(connection:Connect(function(...)
@@ -1018,20 +1019,18 @@ run(function()
 		end)
 	end
 
-	for _, event in {'PlaceBlockEvent', 'BreakBlockEvent'} do
-		bedwars.ClientDamageBlock:WaitFor(event):andThen(function(connection)
-			if not vape.Connections then return end
-			vape:Clean(connection:Connect(function(data)
-				for i, v in cache do
-					if ((data.blockRef.blockPosition * 3) - v[1]).Magnitude <= 30 then
-						table.clear(v[3])
-						table.clear(v)
-						cache[i] = nil
-					end
-				end
-				vapeEvents[event]:Fire(data)
-			end))
-		end)
+	for _, event in {'EntityDamageEvent', 'PlaceBlockEvent', 'BreakBlockEvent'} do
+		if not vape.Connections then return end
+		local eventInstance = bedwars.NetworkLib[event.. 'Zap']
+		if not bedwars.NetworkLib[event.. 'Zap'] then
+			 --notif('Vape', `Failed to grab {event} Event`, 12, 'alert')
+		else
+			notif('Vape', `Grabbed {event}`, 12, 'alert') 
+			vape:Clean(eventInstance.On(function(...)
+				local arguments = compileArguments(event, {...})
+				vapeEvents[event]:Fire(arguments)
+			end)) 
+		end
 	end
 
 	store.blocks = collection('block', gui)
