@@ -6999,7 +6999,7 @@ run(function()
 		Function = function(callback)
 			if callback then
 				for _, v in collectionService:GetTagged('bed') do 
-					task.spawn(Added, v) 
+					task.spawn(Added, v)
 				end
 				BedPlates:Clean(collectionService:GetInstanceAddedSignal('block'):Connect(function(data)
 					local shouldclear = false
@@ -7017,7 +7017,7 @@ run(function()
 						end
 					end
 				end))
-				BedPlates:Clean(collectionService:GetInstanceRemovedSignal('block'):Connect(function()
+				BedPlates:Clean(collectionService:GetInstanceRemovedSignal('block'):Connect(function(data)
 					local shouldclear = false
 					for _, v in collectionService:GetTagged('bed') do 
 						if (data.Position - v.Bed.Position).Magnitude <= 30 then
