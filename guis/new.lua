@@ -6822,6 +6822,9 @@ function mainapi:UpdateGUI(hue, sat, val, default)
 			v.Text.TextColor3 = customcolor or (mainapi.GUIColor.Rainbow and Color3.fromHSV(mainapi:Color((hue - ((textguigradient and i + 2 or i) * 0.025)) % 1)) or VapeLogoGradient.Color.Keypoints[2].Value)
 			if v.Color then
 				v.Color.BackgroundColor3 = v.Text.TextColor3
+				if v.Color:IsA('ImageLabel') then
+					v.Color.ImageColor3 = v.Text.TextColor3
+				end
 			end
 			if textguibackgroundtint.Enabled and v.Background then
 				v.Background.BackgroundColor3 = color.Dark(v.Text.TextColor3, 0.75)
