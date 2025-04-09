@@ -5400,7 +5400,9 @@ run(function()
 		for _, item in store.inventory.inventory.items do
 			local block = bedwars.ItemMeta[item.itemType].block
 			if block then
-				table.insert(blocks, {item.itemType, block.health})
+				if not item.itemType:find('tnt') then
+					table.insert(blocks, {item.itemType, block.health})
+				end
 			end
 		end
 		table.sort(blocks, function(a, b) 
