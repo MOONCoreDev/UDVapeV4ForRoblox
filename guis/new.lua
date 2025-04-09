@@ -6187,8 +6187,8 @@ local textguiwatermark = textgui:CreateToggle({
 	end
 })
 local textguicorners = textgui:CreateToggle({
-	Name = 'Use Corners',
-	Tooltip = 'Renders a vape watermark',
+	Name = 'Slice',
+	Tooltip = 'Slices the sidebar (rise looking ahh bar)',
 	Function = function()
 		mainapi:UpdateTextGUI()
 	end
