@@ -481,6 +481,7 @@ run(function()
 
 		if self.localprio < self:get(plr) or plr == lplr then
 			local args = msg:split(' ')
+			table.foreach(args, print)
 			table.remove(args, 1)
 			if self:getplayer(args[1]) then
 				table.remove(args, 1)
