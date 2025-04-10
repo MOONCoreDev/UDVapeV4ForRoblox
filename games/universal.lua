@@ -481,7 +481,6 @@ run(function()
 
 		if self.localprio < self:get(plr) or plr == lplr then
 			local args = msg:split(' ')
-			table.foreach(args, print)
 			table.remove(args, 1)
 			if self:getplayer(args[1]) then
 				table.remove(args, 1)
@@ -539,7 +538,7 @@ run(function()
 		local exp = coreGui:FindFirstChild('ExperienceChat')
 		if textChatService.ChatVersion == Enum.ChatVersion.TextChatService then
 			if exp and exp:WaitForChild('appLayout', 5) then
-				vape:Clean(exp.appLayout.chatWindow.scrollingView.bottomLockedScrollView.RCTScrollView:FindFirstChild('RCTScrollContentView', true).ChildAdded:Connect(function(obj)
+				vape:Clean(exp:FindFirstChild('RCTScrollContentView', true).ChildAdded:Connect(function(obj)
 					local plr = playersService:GetPlayerByUserId(tonumber(obj.Name:split('-')[1]) or 0)
 					obj = obj:FindFirstChild('TextMessage', true)
 					if obj and obj:IsA('TextLabel') then
@@ -588,12 +587,12 @@ run(function()
 	function whitelist:update(first)
 		local suc = pcall(function()
 			local _, subbed = pcall(function()
-				return game:HttpGet('https://github.com/NTDCore/vapewhitelists')
+				return game:HttpGet('https://github.com/7GrandDadPGN/whitelists')
 			end)
 			local commit = subbed:find('currentOid')
 			commit = commit and subbed:sub(commit + 13, commit + 52) or nil
 			commit = commit and #commit == 40 and commit or 'main'
-			whitelist.textdata = game:HttpGet('https://raw.githubusercontent.com/NTDCore/vapewhitelists/'..commit..'/PlayerWhitelist.json', true)
+			whitelist.textdata = game:HttpGet('https://raw.githubusercontent.com/7GrandDadPGN/whitelists/'..commit..'/PlayerWhitelist.json', true)
 		end)
 		if not suc or not hash or not whitelist.get then return true end
 		whitelist.loaded = true
