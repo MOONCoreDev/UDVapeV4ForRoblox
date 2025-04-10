@@ -1009,6 +1009,25 @@ run(function()
 
 	local storeChanged = bedwars.Store.changed:connect(updateStore)
 	updateStore(bedwars.Store:getState(), {})
+	local eventArguments = {
+		EntityDamageEvent = {
+			[1] = 'entityInstance',
+			[2] = '',
+			[3] = '',
+			[4]	= 'fromPosition',
+			[5] = 'fromEntity',
+			[6] = 'knockbackMultiplier',
+			[7] = ''
+		}
+	}
+
+	local function compileArguments(event, arguments)
+		local tab = {}
+		for i,v in eventArguments[event] do
+			tab[v] = arguments[i]
+		end
+		return tab
+	end
 
 	for _, event in {'MatchEndEvent', 'EntityDeathEvent', 'BedwarsBedBreak', 'BalloonPopped', 'AngelProgress', 'GrapplingHookFunctions'} do
 		if not vape.Connections then return end
@@ -1025,7 +1044,7 @@ run(function()
 		if not bedwars.NetworkLib[event.. 'Zap'] then
 			 --notif('Vape', `Failed to grab {event} Event`, 12, 'alert')
 		else
-			notif('Vape', `Grabbed {event}`, 12, 'alert') 
+			--notif('Vape', `Grabbed {event}`, 12, 'alert') 
 			vape:Clean(eventInstance.On(function(...)
 				local arguments = compileArguments(event, {...})
 				vapeEvents[event]:Fire(arguments)
