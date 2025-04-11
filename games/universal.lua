@@ -7693,7 +7693,7 @@ run(function()
 	corner.CornerRadius = UDim.new(0, 4)
 	corner.Parent = label
 end)
-	
+
 run(function()
 	local Ping
 	local label
@@ -7912,7 +7912,7 @@ run(function()
 	corner.CornerRadius = UDim.new(0, 4)
 	corner.Parent = label
 end)
-	
+
 run(function()
 	local TimeChanger
 	local Value
