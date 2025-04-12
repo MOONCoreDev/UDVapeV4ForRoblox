@@ -1009,6 +1009,7 @@ run(function()
 
 	local storeChanged = bedwars.Store.changed:connect(updateStore)
 	updateStore(bedwars.Store:getState(), {})
+
 	local eventArguments = {
 		EntityDamageEvent = {
 			[1] = 'entityInstance',
@@ -2908,18 +2909,34 @@ run(function()
 	})
 end)
 
---[[
 run(function()
-	vape.Categories.Blatant:CreateModule({
+	local NoFall
+	local params = RaycastParams.new()
+
+	NoFall = vape.Categories.Blatant:CreateModule({
 		Name = 'NoFall',
 		Function = function(callback)
 			if callback then 
-				bedwars.Client:Get(remotes.GroundHit):SendToServer() 
+				task.spawn(function()
+					repeat
+						if entitylib.isAlive then
+							params.FilterDescendantsInstances = {lplr.Character}
+							if not workspace:Raycast(lplr.Character.HumanoidRootPart.Position, Vector3.new(0, -11, 0), params) and workspace:Raycast(lplr.Character.HumanoidRootPart.Position, Vector3.new(0, -31, 0), params) then
+								if lplr.Character.HumanoidRootPart.Velocity.Y <= -70.5 then
+									lplr.Character.HumanoidRootPart.Velocity += Vector3.new(0, 15, 0)
+								elseif lplr.Character.HumanoidRootPart.Velocity.Y <= -200 then
+									lplr.Character.HumanoidRootPart.Velocity += Vector3.new(0, 170, 0)
+								end
+							end
+						end
+						task.wait()
+					until (not NoFall.Enabled)
+				end)
 			end
 		end,
 		Tooltip = 'Prevents taking fall damage.'
 	})
-end)]]
+end)
 	
 run(function()
 	local old
