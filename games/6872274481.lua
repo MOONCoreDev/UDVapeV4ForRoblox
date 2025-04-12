@@ -2921,11 +2921,11 @@ run(function()
 					repeat
 						if entitylib.isAlive then
 							params.FilterDescendantsInstances = {lplr.Character}
-							if not workspace:Raycast(lplr.Character.HumanoidRootPart.Position, Vector3.new(0, -11, 0), params) and workspace:Raycast(lplr.Character.HumanoidRootPart.Position, Vector3.new(0, -31, 0), params) then
-								if lplr.Character.HumanoidRootPart.Velocity.Y <= -70.5 then
-									lplr.Character.HumanoidRootPart.Velocity += Vector3.new(0, 15, 0)
-								elseif lplr.Character.HumanoidRootPart.Velocity.Y <= -200 then
-									lplr.Character.HumanoidRootPart.Velocity += Vector3.new(0, 170, 0)
+							if not workspace:Raycast(entitylib.character.HumanoidRootPart.Position, Vector3.new(0, -11, 0), params) and workspace:Raycast(entitylib.character.HumanoidRootPart.Position, Vector3.new(0, -31, 0), params) then
+								if entitylib.character.HumanoidRootPart.Velocity.Y <= -70.5 then
+									entitylib.character.HumanoidRootPart.Velocity += Vector3.new(0, 15, 0)
+								elseif entitylib.character.HumanoidRootPart.Velocity.Y <= -200 then
+									entitylib.character.HumanoidRootPart.Velocity += Vector3.new(0, 170, 0)
 								end
 							end
 						end
