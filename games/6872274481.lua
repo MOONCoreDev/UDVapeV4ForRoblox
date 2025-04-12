@@ -1024,8 +1024,10 @@ run(function()
 
 	local function compileArguments(event, arguments)
 		local tab = {}
-		for i,v in eventArguments[event] do
-			tab[v] = arguments[i]
+		if eventArguments[event] then
+			for i,v in eventArguments[event] do
+				tab[v] = arguments[i]
+			end
 		end
 		return tab
 	end
@@ -1182,7 +1184,7 @@ end)
 for _, v in {'AntiRagdoll', 'TriggerBot', 'SilentAim', 'AutoRejoin', 'Rejoin', 'Disabler', 'Timer', 'ServerHop', 'MouseTP', 'MurderMystery'} do
 	vape:Remove(v)
 end
-print(bedwars.Client:Get(remotes.WarlockTarget))
+
 run(function()
 	local AimAssist
 	local Targets
@@ -7235,7 +7237,7 @@ run(function()
 		for _, v in tab do
 			if (v.Position - localPosition).Magnitude < Range.Value and bedwars.BlockController:isBlockBreakable({blockPosition = v.Position / 3}, lplr) then
 				if not SelfBreak.Enabled and v:GetAttribute('PlacedByUserId') == lplr.UserId then continue end
-				--if (v:GetAttribute('BedShieldEndTime') or 0) > workspace:GetServerTimeNow() then continue end
+				if (v:GetAttribute('BedShieldEndTime') or 0) > workspace:GetServerTimeNow() then continue end
 				if LimitItem.Enabled and not (store.hand.tool and bedwars.ItemMeta[store.hand.tool.Name].breakBlock) then continue end
 	
 				hit += 1
@@ -7250,9 +7252,9 @@ run(function()
 						currentnode = path[currentnode]
 					end
 				end
-	
+
 				task.wait(InstantBreak.Enabled and (store.damageBlockFail > tick() and 4.5 or 0) or 0.25)
-	
+
 				return true
 			end
 		end
@@ -7295,12 +7297,12 @@ run(function()
 					if not Breaker.Enabled then break end
 					if entitylib.isAlive then
 						local localPosition = entitylib.character.RootPart.Position
-	
+
 						if attemptBreak(Bed.Enabled and beds, localPosition) then continue end
 						if attemptBreak(customlist, localPosition) then continue end
 						if attemptBreak(LuckyBlock.Enabled and luckyblock, localPosition) then continue end
 						if attemptBreak(IronOre.Enabled and ironores, localPosition) then continue end
-	
+
 						for _, v in parts do
 							v.Position = Vector3.zero
 						end
