@@ -2246,7 +2246,7 @@ run(function()
 	local up = 0
 	local down = 0
 	InfiniteFly = vape.Categories.Blatant:CreateModule({
-		Name = 'Infinite Fly',
+		Name = 'InfiniteFly',
 		Tooltip = 'Allows you to hover in the air for eternity.',
 		Function = function(call)
 			if call then
