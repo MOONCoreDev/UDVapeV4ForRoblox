@@ -2041,19 +2041,19 @@ run(function()
 					vape.Modules.Invisible:Toggle()
 					notif('InfiniteFly', 'Invisible cannot be used with InfiniteFly', 3, 'warning')
 				end
-	
+
 				if not proper then
 					notif('InfiniteFly', 'Broken state detected', 3, 'alert')
 					InfiniteFly:Toggle()
 					return
 				end
-	
+
 				success = doClone()
 				if not success then
 					InfiniteFly:Toggle()
 					return
 				end
-	
+
 				InfiniteFly:Clean(runService.PreSimulation:Connect(function(dt)
 					if entitylib.isAlive then
 						local mass = 1.5 + ((up + down) * VerticalValue.Value)
@@ -2186,6 +2186,158 @@ run(function()
 		Default = true
 	})
 end)]]
+
+run(function()
+	local verticalspeed
+	local oldroot
+	local clone
+	local hip
+	local function createClone()
+		if entitylib.isAlive and entitylib.character.Humanoid.Health > 0 and (not oldroot or not oldroot.Parent) then
+			hip = entitylib.character.Humanoid.HipHeight
+			oldroot = entitylib.character.HumanoidRootPart
+			if not lplr.Character.Parent then return false end
+			lplr.Character.Parent = game
+			clone = oldroot:Clone()
+			clone.Parent = lplr.Character
+			oldroot.CanCollide = true
+			oldroot.Parent = gameCamera
+			bedwars.QueryUtil:setQueryIgnored(oldroot, true)
+			clone.CFrame = oldroot.CFrame
+			lplr.Character.PrimaryPart = clone
+			lplr.Character.Parent = workspace
+			for _, v in lplr.Character:GetDescendants() do
+				if v:IsA('Weld') or v:IsA('Motor6D') then
+					if v.Part0 == oldroot then v.Part0 = clone end
+					if v.Part1 == oldroot then v.Part1 = clone end
+				end
+			end
+			return true
+		end
+		return false
+	end
+	local flycon = nil
+	local function destroyClone()
+		if not oldroot or not oldroot.Parent or not entitylib.isAlive then return false end
+		lplr.Character.Parent = game
+		oldroot.Parent = lplr.Character
+		lplr.Character.PrimaryPart = oldroot
+		lplr.Character.Parent = workspace
+		for _, v in lplr.Character:GetDescendants() do
+			if v:IsA('Weld') or v:IsA('Motor6D') then
+				if v.Part0 == clone then v.Part0 = oldroot end
+				if v.Part1 == clone then v.Part1 = oldroot end
+			end
+		end
+		if clone then
+			clone:Destroy()
+			clone = nil
+		end
+		entitylib.character.Humanoid.HipHeight = hip or 2
+		oldroot.Transparency = 1
+		oldroot = nil
+	end
+	local rayCheck = RaycastParams.new()
+	rayCheck.RespectCanCollide = true
+	local flyTick = tick()
+	local noRay = false
+	local cansafeland = false
+	local flylandtick = tick()
+	local up = 0
+	local down = 0
+	InfiniteFly = vape.Categories.Blatant:CreateModule({
+		Name = 'Infinite Fly',
+		Tooltip = 'Allows you to hover in the air for eternity.',
+		Function = function(call)
+			if call then
+				rayCheck.FilterDescendantsInstances = {lplr.Character, AntiFallPart}
+				if not entitylib.isAlive or flylanding or not isnetworkowner(entitylib.character.RootPart) then
+					notif('InfiniteFly', 'Can\'t Fly at this position.', 10, 'alert')
+					return InfiniteFly:Toggle()
+				end
+				local a, b = pcall(createClone)
+				if not a then
+					return InfiniteFly:Toggle()
+				end
+				local currenty = entitylib.character.RootPart.Position.Y
+				InfiniteFly:Clean(inputService.InputBegan:Connect(function(input)
+					if not inputService:GetFocusedTextBox() then
+						if input.KeyCode == Enum.KeyCode.Space or input.KeyCode == Enum.KeyCode.ButtonA then
+							up = 1
+						elseif input.KeyCode == Enum.KeyCode.LeftShift or input.KeyCode == Enum.KeyCode.ButtonL2 then
+							down = -1
+						end
+					end
+				end))
+				InfiniteFly:Clean(inputService.InputEnded:Connect(function(input)
+					if input.KeyCode == Enum.KeyCode.Space or input.KeyCode == Enum.KeyCode.ButtonA then
+						up = 0
+					elseif input.KeyCode == Enum.KeyCode.LeftShift or input.KeyCode == Enum.KeyCode.ButtonL2 then
+						down = 0
+					end
+				end))
+				flycon = runService.PreSimulation:Connect(function(dt) --> dont ask why i dont use clean
+					if not entitylib.isAlive or not clone or not clone.Parent then
+						flycon:Disconnect()
+						InfiniteFly:Toggle()
+						return
+					end
+					local mass = 1.5 + ((up + down) * verticalspeed.Value)
+					local moveDir = entitylib.character.Humanoid.MoveDirection
+					local velo = getSpeed()
+					local destination = (moveDir * math.max(20 - velo, 0) * dt)
+					clone.CFrame += destination
+					clone.AssemblyLinearVelocity = (moveDir * velo) + Vector3.new(0, mass, 0)
+					rayCheck.FilterDescendantsInstances = {lplr.Character, AntiFallPart}
+					if InfiniteFly.Enabled then
+						oldroot.CFrame = CFrame.new(clone.CFrame.X, oldroot.CFrame.Y, clone.CFrame.Z)
+					end
+					local airtime = noRay and 0 or (tick() - entitylib.character.AirTime)
+					if (airtime > 1.2 or workspace:Raycast(oldroot.Position, Vector3.new(0, -40, 0), rayCheck)) and oldroot  then
+						local ray = workspace:Raycast(clone.Position, Vector3.new(0, -1000, 0), rayCheck)
+						if ray then
+							oldroot.Velocity = Vector3.zero
+							oldroot.CFrame = CFrame.new(oldroot.CFrame.X, ray.Position.Y + (entitylib.character.HipHeight + (InfiniteFly.Enabled and 0 or 35)), oldroot.CFrame.Z)
+							cansafeland = true
+						else
+							noRay = true
+						end
+					elseif airtime < 0.7 and oldroot.CFrame.Y < (currenty - 100) and InfiniteFly.Enabled then
+						warn('tping up')
+						oldroot.CFrame += Vector3.new(0, currenty + 250, 0)
+						noRay = false
+					end
+				end)
+			else
+				notif('InfiniteFly', 'Waiting 1.5s to land', 3, 'alert')
+				flylandtick = tick() + 1.5
+				flylanding = true
+				if not oldroot or not oldroot.Parent then
+					if flycon then
+						flycon:Disconnect()
+					end
+					destroyClone()
+					flylanding = false
+					return notif('InfiniteFly', 'Landed', 8, 'alert')
+				end
+				repeat task.wait() until cansafeland and tick() > flylandtick or tick() > flylandtick
+				flylanding = false
+				if flycon then
+					flycon:Disconnect()
+				end
+				destroyClone()
+				entitylib.character.RootPart.Velocity = Vector3.zero
+				notif('InfiniteFly', 'Landed', 8, 'alert')
+			end
+		end
+	})
+	verticalspeed = InfiniteFly:CreateSlider({
+		Name = 'Vertical Speed',
+		Min = 1,
+		Max = 150,
+		Default = 80
+	})
+end)
 	
 run(function()
 	vape.Categories.Blatant:CreateModule({
