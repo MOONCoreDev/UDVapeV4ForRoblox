@@ -2192,6 +2192,16 @@ run(function()
 	local oldroot
 	local clone
 	local hip
+	local flycon
+	local rayCheck = RaycastParams.new()
+	rayCheck.RespectCanCollide = true
+	local flyTick = tick()
+	local noRay = false
+	local cansafeland = false
+	local flylandtick = tick()
+	local up = 0
+	local down = 0
+
 	local function createClone()
 		if entitylib.isAlive and entitylib.character.Humanoid.Health > 0 and (not oldroot or not oldroot.Parent) then
 			hip = entitylib.character.Humanoid.HipHeight
@@ -2216,7 +2226,7 @@ run(function()
 		end
 		return false
 	end
-	local flycon = nil
+
 	local function destroyClone()
 		if not oldroot or not oldroot.Parent or not entitylib.isAlive then return false end
 		lplr.Character.Parent = game
@@ -2237,14 +2247,7 @@ run(function()
 		oldroot.Transparency = 1
 		oldroot = nil
 	end
-	local rayCheck = RaycastParams.new()
-	rayCheck.RespectCanCollide = true
-	local flyTick = tick()
-	local noRay = false
-	local cansafeland = false
-	local flylandtick = tick()
-	local up = 0
-	local down = 0
+
 	InfiniteFly = vape.Categories.Blatant:CreateModule({
 		Name = 'InfiniteFly',
 		Tooltip = 'Allows you to hover in the air for eternity.',
