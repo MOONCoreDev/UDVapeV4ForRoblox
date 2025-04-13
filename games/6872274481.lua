@@ -951,6 +951,8 @@ run(function()
 						animation:Stop()
 						animation:Destroy()
 					end
+
+					table.clear(cache)
 				end
 			end)
 
@@ -2925,9 +2927,9 @@ run(function()
 							params.FilterDescendantsInstances = {lplr.Character}
 							if not workspace:Raycast(entitylib.character.HumanoidRootPart.Position, Vector3.new(0, -11, 0), params) and workspace:Raycast(entitylib.character.HumanoidRootPart.Position, Vector3.new(0, -31, 0), params) then
 								if entitylib.character.HumanoidRootPart.Velocity.Y <= -70.5 then
-									entitylib.character.HumanoidRootPart.Velocity += Vector3.new(0, 15, 0)
-								elseif entitylib.character.HumanoidRootPart.Velocity.Y <= -200 then
-									entitylib.character.HumanoidRootPart.Velocity += Vector3.new(0, 170, 0)
+									entitylib.character.HumanoidRootPart.Velocity += Vector3.new(0, 13, 0)
+								elseif entitylib.character.HumanoidRootPart.Velocity.Y <= -170 then
+									entitylib.character.HumanoidRootPart.Velocity += Vector3.new(0, 125, 0)
 								end
 							end
 						end
@@ -2942,7 +2944,7 @@ end)
 	
 run(function()
 	local old
-	
+
 	vape.Categories.Blatant:CreateModule({
 		Name = 'NoSlowdown',
 		Function = function(callback)
