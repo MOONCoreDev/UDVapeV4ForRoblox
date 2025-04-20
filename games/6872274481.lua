@@ -3084,6 +3084,8 @@ end)
 
 run(function()
 	local NoFall
+	local Mode
+	local params = RaycastParams.new()
 	
 	NoFall = vape.Categories.Blatant:CreateModule({
 		Name = 'NoFall',
@@ -3092,9 +3094,20 @@ run(function()
 				local tracked = 0
 				repeat
 					if entitylib.isAlive then
-						tracked = entitylib.character.Humanoid.FloorMaterial == Enum.Material.Air and math.min(tracked, entitylib.character.RootPart.AssemblyLinearVelocity.Y) or 0
-						if tracked < -85 then
-							entitylib.character.Humanoid:ChangeState(Enum.HumanoidStateType.Landed)
+						if Mode.Value == 'Landed' then
+							tracked = entitylib.character.Humanoid.FloorMaterial == Enum.Material.Air and math.min(tracked, entitylib.character.RootPart.AssemblyLinearVelocity.Y) or 0
+							if tracked < -85 then
+								entitylib.character.Humanoid:ChangeState(Enum.HumanoidStateType.Landed)
+							end
+						else
+							params.FilterDescendantsInstances = {lplr.Character}
+							if not workspace:Raycast(entitylib.character.HumanoidRootPart.Position, Vector3.new(0, -11, 0), params) and workspace:Raycast(entitylib.character.HumanoidRootPart.Position, Vector3.new(0, -31, 0), params) then
+								if entitylib.character.HumanoidRootPart.Velocity.Y <= -70.5 then
+									entitylib.character.HumanoidRootPart.Velocity += Vector3.new(0, 13, 0)
+								elseif entitylib.character.HumanoidRootPart.Velocity.Y <= -170 then
+									entitylib.character.HumanoidRootPart.Velocity += Vector3.new(0, 125, 0)
+								end
+							end
 						end
 					end
 					task.wait(0.03)
@@ -3102,6 +3115,10 @@ run(function()
 			end
 		end,
 		Tooltip = 'Prevents taking fall damage.'
+	})
+	Mode = NoFall:CreateDropdown({
+		Name = 'Mode',
+		List = {'Landed', 'Velocity'}
 	})
 end)
 
