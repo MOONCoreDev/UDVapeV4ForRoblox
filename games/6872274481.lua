@@ -175,7 +175,7 @@ local function getSword()
 	for slot, item in store.inventory.inventory.items do
 		local swordMeta = bedwars.ItemMeta[item.itemType].sword
 		if swordMeta then
-			local swordDamage = swordMeta.baseDamage or 0
+			local swordDamage = swordMeta.damage or 0
 			if swordDamage > bestSwordDamage then
 				bestSword, bestSwordSlot, bestSwordDamage = item, slot, swordDamage
 			end
@@ -210,6 +210,7 @@ local function getStrength(plr)
 	if not plr.Player then
 		return 0
 	end
+
 	local strength = 0
 	for _, v in (store.inventories[plr.Player] or {items = {}}).items do
 		local itemmeta = bedwars.ItemMeta[v.itemType]
@@ -217,6 +218,7 @@ local function getStrength(plr)
 			strength = itemmeta.sword.damage
 		end
 	end
+
 	return strength
 end
 
@@ -1208,7 +1210,7 @@ run(function()
 		Function = function(callback)
 			if callback then
 				AimAssist:Clean(runService.Heartbeat:Connect(function(dt)
-					if entitylib.isAlive and store.hand.toolType == 'sword' and ((not ClickAim.Enabled) or (os.clock() - bedwars.SwordController.lastSwing) < 0.4) then
+					if entitylib.isAlive and store.hand.toolType == 'sword' and ((not ClickAim.Enabled) or (tick() - bedwars.SwordController.lastSwing) < 0.4) then
 						local ent = KillauraTarget.Enabled and store.KillauraTarget or entitylib.EntityPosition({
 							Range = Distance.Value,
 							Part = 'RootPart',
@@ -1300,12 +1302,7 @@ run(function()
 							end
 						end
 					elseif store.hand.toolType == 'sword' then
-						if bedwars.SwordController:getChargeState() ~= 'IDLE' then
-							bedwars.SwordController:stopCharging(store.hand.tool.Name)
-							bedwars.SwordController.chargingMaid:DoCleaning()
-						end
-	
-						bedwars.SwordController:swingSwordAtMouse(0.25 + math.random() / 8)
+						bedwars.SwordController:swingSwordAtMouse(0.39)
 					end
 				end
 	
@@ -1355,8 +1352,8 @@ run(function()
 		Name = 'CPS',
 		Min = 1,
 		Max = 9,
-		DefaultMin = 4,
-		DefaultMax = 4
+		DefaultMin = 7,
+		DefaultMax = 7
 	})
 	AutoClicker:CreateToggle({
 		Name = 'Place Blocks',
@@ -1494,7 +1491,7 @@ run(function()
 	
 							doAttack = doAttack or bedwars.SwordController:getTargetInRegion(attackRange or 3.8 * 3, 0)
 							if doAttack then
-								bedwars.SwordController:swingSwordAtMouse(0.25 + math.random() / 8)
+								bedwars.SwordController:swingSwordAtMouse()
 							end
 						end
 					end
@@ -1509,8 +1506,8 @@ run(function()
 		Name = 'CPS',
 		Min = 1,
 		Max = 9,
-		DefaultMin = 4,
-		DefaultMax = 4
+		DefaultMin = 7,
+		DefaultMax = 7
 	})
 end)
 	
@@ -2416,7 +2413,7 @@ run(function()
 		end
 
 		if LegitAura.Enabled then
-			if (os.clock() - bedwars.SwordController.lastSwing) > 0.2 then return false end
+			if (tick() - bedwars.SwordController.lastSwing) > 0.2 then return false end
 		end
 
 		return sword, meta
@@ -2524,7 +2521,7 @@ run(function()
 									store.KillauraTarget = v
 									if not Swing.Enabled and AnimDelay <= tick() and not LegitAura.Enabled then
 										AnimDelay = tick() + (meta.sword.respectAttackSpeedForEffects and meta.sword.attackSpeed or 0.25)
-										bedwars.SwordController:playSwordEffect(meta, 0)
+										bedwars.SwordController:playSwordEffect(meta, false)
 										if meta.displayName:find(' Scythe') then
 											bedwars.ScytheController:playLocalAnimation()
 										end
@@ -2546,7 +2543,8 @@ run(function()
 									store.attackReachUpdate = tick() + 1
 									AttackRemote:FireServer({
 										weapon = sword.tool,
-										chargeRatio = ChargeTime.Value,
+										chargedAttack = {chargeRatio = 0},
+										lastSwingServerTimeDelta = 0.5,
 										entityInstance = v.Character,
 										validate = {
 											raycast = {
@@ -2640,7 +2638,7 @@ run(function()
 		Name = 'Charge time',
 		Min = 0,
 		Max = 1,
-		Default = 0.9,
+		Default = 0.65,
 		Decimal = 100
 	})
 	AngleSlider = Killaura:CreateSlider({
@@ -7657,7 +7655,7 @@ run(function()
 				oldvalues = table.clone(tab)
 				oldfont = debug.getconstant(bedwars.DamageIndicator, 86)
 				debug.setconstant(bedwars.DamageIndicator, 86, Enum.Font[FontOption.Value])
-				debug.setconstant(bedwars.DamageIndicator, 105, Stroke.Enabled and 'Thickness' or 'Enabled')
+				debug.setconstant(bedwars.DamageIndicator, 119, Stroke.Enabled and 'Thickness' or 'Enabled')
 				tab.strokeThickness = Stroke.Enabled and 1 or false
 				tab.textSize = Size.Value
 				tab.blowUpSize = Size.Value
@@ -7670,7 +7668,7 @@ run(function()
 					tab[i] = v
 				end
 				debug.setconstant(bedwars.DamageIndicator, 86, oldfont)
-				debug.setconstant(bedwars.DamageIndicator, 105, 'Thickness')
+				debug.setconstant(bedwars.DamageIndicator, 119, 'Thickness')
 			end
 		end,
 		Tooltip = 'Customize the damage indicator'
