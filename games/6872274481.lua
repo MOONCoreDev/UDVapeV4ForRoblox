@@ -23,6 +23,8 @@ local contextActionService = cloneref(game:GetService('ContextActionService'))
 local coreGui = cloneref(game:GetService('CoreGui'))
 local starterGui = cloneref(game:GetService('StarterGui'))
 
+local FlyLandTick = tick()
+
 local isnetworkowner = identifyexecutor and table.find({'AWP', 'Nihon'}, ({identifyexecutor()})[1]) and isnetworkowner or function()
 	return true
 end
@@ -1737,7 +1739,7 @@ run(function()
 				AntiFallPart.CanCollide = val == 'Collide'
 			end
 		end,
-	Tooltip = 'Normal - Smoothly moves you towards the nearest safe point\nVelocity - Launches you upward after touching\nCollide - Allows you to walk on the part'
+		Tooltip = 'Normal - Smoothly moves you towards the nearest safe point\nVelocity - Launches you upward after touching\nCollide - Allows you to walk on the part'
 	})
 	local materials = {'ForceField'}
 	for _, v in Enum.Material:GetEnumItems() do
@@ -1825,7 +1827,7 @@ run(function()
 					end
 				end))
 				Fly:Clean(runService.PreSimulation:Connect(function(dt)
-					if entitylib.isAlive and isnetworkowner(entitylib.character.RootPart) then
+					if entitylib.isAlive and isnetworkowner(entitylib.character.RootPart) and tick() > FlyLandTick then
 						local flyAllowed = (lplr.Character:GetAttribute('InflatedBalloons') and lplr.Character:GetAttribute('InflatedBalloons') > 0) or store.matchState == 2
 						local mass = (1.5 + (flyAllowed and 6 or 0) * (tick() % 0.4 < 0.2 and -1 or 1)) + ((up + down) * VerticalValue.Value)
 						local root, moveDirection = entitylib.character.RootPart, entitylib.character.Humanoid.MoveDirection
@@ -2252,19 +2254,18 @@ run(function()
 end)]]
 
 run(function()
-	local verticalspeed
+	local FlySpeed
+	local VerticalSpeed
+
+	local rayCheck = RaycastParams.new()
+	local reduceAirTime = false
+
 	local oldroot
 	local clone
-	local hip
-	local flycon
-	local rayCheck = RaycastParams.new()
-	rayCheck.RespectCanCollide = true
-	local flyTick = tick()
-	local noRay = false
-	local cansafeland = false
-	local flylandtick = tick()
+
 	local up = 0
 	local down = 0
+	local hip = 2
 
 	local function createClone()
 		if entitylib.isAlive and entitylib.character.Humanoid.Health > 0 and (not oldroot or not oldroot.Parent) then
@@ -2276,8 +2277,9 @@ run(function()
 			clone.Parent = lplr.Character
 			oldroot.CanCollide = true
 			oldroot.Parent = gameCamera
+			store.rootpart = clone
+			Instance.new('Highlight', oldroot)
 			bedwars.QueryUtil:setQueryIgnored(oldroot, true)
-			clone.CFrame = oldroot.CFrame
 			lplr.Character.PrimaryPart = clone
 			lplr.Character.Parent = workspace
 			for _, v in lplr.Character:GetDescendants() do
@@ -2310,22 +2312,22 @@ run(function()
 		entitylib.character.Humanoid.HipHeight = hip or 2
 		oldroot.Transparency = 1
 		oldroot = nil
+		store.rootpart = nil
 	end
 
 	InfiniteFly = vape.Categories.Blatant:CreateModule({
 		Name = 'InfiniteFly',
-		Tooltip = 'Allows you to hover in the air for eternity.',
+		Tooltip = 'Makes you go zoom.',
 		Function = function(call)
 			if call then
-				rayCheck.FilterDescendantsInstances = {lplr.Character, AntiFallPart}
-				if not entitylib.isAlive or flylanding or not isnetworkowner(entitylib.character.RootPart) then
-					notif('InfiniteFly', 'Can\'t Fly at this position.', 10, 'alert')
+				if not entitylib.isAlive or FlyLandTick > tick() or not isnetworkowner(entitylib.character.RootPart) then
 					return InfiniteFly:Toggle()
 				end
 				local a, b = pcall(createClone)
 				if not a then
 					return InfiniteFly:Toggle()
 				end
+				rayCheck.FilterDescendantsInstances = {lplr.Character, AntiFallPart, oldroot, clone}
 				local currenty = entitylib.character.RootPart.Position.Y
 				InfiniteFly:Clean(inputService.InputBegan:Connect(function(input)
 					if not inputService:GetFocusedTextBox() then
@@ -2343,69 +2345,71 @@ run(function()
 						down = 0
 					end
 				end))
-				flycon = runService.PreSimulation:Connect(function(dt) --> dont ask why i dont use clean
-					if not entitylib.isAlive or not clone or not clone.Parent then
-						flycon:Disconnect()
-						InfiniteFly:Toggle()
-						return
+				InfiniteFly:Clean(runService.PreSimulation:Connect(function(delta)
+					if not entitylib.isAlive or not clone or not clone.Parent or not isnetworkowner(oldroot) then
+						return InfiniteFly:Toggle()
 					end
-					local mass = 1.5 + ((up + down) * verticalspeed.Value)
+					FlyLandTick = tick() + 1
+					local mass = 1.5 + ((up + down) * VerticalSpeed.Value)
 					local moveDir = entitylib.character.Humanoid.MoveDirection
 					local velo = getSpeed()
-					local destination = (moveDir * math.max(20 - velo, 0) * dt)
+					local destination = (moveDir * math.max(FlySpeed.Value - velo, 0) * delta)
+					local airtime = reduceAirTime and 0 or (tick() - entitylib.character.AirTime)
 					clone.CFrame += destination
 					clone.AssemblyLinearVelocity = (moveDir * velo) + Vector3.new(0, mass, 0)
-					rayCheck.FilterDescendantsInstances = {lplr.Character, AntiFallPart}
-					if InfiniteFly.Enabled then
-						oldroot.CFrame = CFrame.new(clone.CFrame.X, oldroot.CFrame.Y, clone.CFrame.Z)
-					end
-					local airtime = noRay and 0 or (tick() - entitylib.character.AirTime)
-					if (airtime > 1.2 or workspace:Raycast(oldroot.Position, Vector3.new(0, -40, 0), rayCheck)) and oldroot  then
+
+					local check1 = (not workspace:Raycast(clone.Position, Vector3.new(0, -1000, 0), rayCheck) and workspace:Raycast(oldroot.Position + (oldroot.CFrame.LookVector * 1.3), Vector3.new(0, -1000, 0), rayCheck))
+					local check2 = (workspace:Raycast(clone.Position, Vector3.new(0, -1000, 0), rayCheck) and workspace:Raycast(oldroot.Position, Vector3.new(0, -1000, 0), rayCheck))
+
+					oldroot.CFrame = (check1 and not check2) and oldroot.CFrame or CFrame.lookAlong(Vector3.new(clone.Position.X, oldroot.Position.Y, clone.Position.Z), clone.CFrame.LookVector)
+					if (airtime > 1.2 or workspace:Raycast(clone.Position, Vector3.new(0, -1000, 0), rayCheck)) and not check1 then
 						local ray = workspace:Raycast(clone.Position, Vector3.new(0, -1000, 0), rayCheck)
 						if ray then
+							oldroot.CFrame = CFrame.lookAlong(Vector3.new(oldroot.Position.X, ray.Position.Y + entitylib.character.HipHeight, oldroot.Position.Z), clone.CFrame.LookVector)
 							oldroot.Velocity = Vector3.zero
-							oldroot.CFrame = CFrame.new(oldroot.CFrame.X, ray.Position.Y + (entitylib.character.HipHeight + (InfiniteFly.Enabled and 0 or 35)), oldroot.CFrame.Z)
-							cansafeland = true
 						else
-							noRay = true
+							reduceAirTime = true
 						end
-					elseif airtime < 0.7 and oldroot.CFrame.Y < (currenty - 100) and InfiniteFly.Enabled then
-						warn('tping up')
+					elseif airtime < 0.7 and oldroot.CFrame.Y < (currenty - 100) then
 						oldroot.CFrame += Vector3.new(0, currenty + 250, 0)
-						noRay = false
+						reduceAirTime = false
 					end
-				end)
+				end))
 			else
-				notif('InfiniteFly', 'Waiting 1.5s to land', 3, 'alert')
-				flylandtick = tick() + 1.5
-				flylanding = true
-				if not oldroot or not oldroot.Parent then
-					if flycon then
-						flycon:Disconnect()
+				notif('InfiniteFly', 'Waiting 1.1s to land', 1.1, 'alert')
+				up = 0
+				down = 0
+				FlyLandTick = tick() + 1.1
+				repeat 
+					if not entitylib.isAlive or not isnetworkowner(oldroot) then 
+						break 
 					end
-					destroyClone()
-					flylanding = false
-					return notif('InfiniteFly', 'Landed', 8, 'alert')
-				end
-				repeat task.wait() until cansafeland and tick() > flylandtick or tick() > flylandtick
-				flylanding = false
-				if flycon then
-					flycon:Disconnect()
-				end
+					local ray = workspace:Raycast(oldroot.Position, Vector3.new(0, -1000, 0), rayCheck) 
+					if ray then
+						oldroot.Velocity = Vector3.zero
+						oldroot.CFrame = CFrame.lookAlong(Vector3.new(oldroot.Position.X, ray.Position.Y + entitylib.character.HipHeight, oldroot.Position.Z), oldroot.CFrame.LookVector)
+					end
+					task.wait() 
+				until tick() > FlyLandTick
 				destroyClone()
-				entitylib.character.RootPart.Velocity = Vector3.zero
 				notif('InfiniteFly', 'Landed', 8, 'alert')
 			end
 		end
 	})
-	verticalspeed = InfiniteFly:CreateSlider({
+	FlySpeed = InfiniteFly:CreateSlider({
+		Name = 'Speed',
+		Min = 1,
+		Max = 23,
+		Default = 23
+	})
+	VerticalSpeed = InfiniteFly:CreateSlider({
 		Name = 'Vertical Speed',
 		Min = 1,
 		Max = 150,
-		Default = 80
+		Default = 70
 	})
 end)
-	
+
 run(function()
 	vape.Categories.Blatant:CreateModule({
 		Name = 'KeepSprint',
@@ -3166,9 +3170,9 @@ run(function()
 							params.FilterDescendantsInstances = {lplr.Character}
 							if not workspace:Raycast(entitylib.character.HumanoidRootPart.Position, Vector3.new(0, -11, 0), params) and workspace:Raycast(entitylib.character.HumanoidRootPart.Position, Vector3.new(0, -31, 0), params) then
 								if entitylib.character.HumanoidRootPart.Velocity.Y <= -70.5 then
-									entitylib.character.HumanoidRootPart.Velocity += Vector3.new(0, 13, 0)
-								elseif entitylib.character.HumanoidRootPart.Velocity.Y <= -170 then
-									entitylib.character.HumanoidRootPart.Velocity += Vector3.new(0, 125, 0)
+									entitylib.character.HumanoidRootPart.Velocity += Vector3.new(0, 20, 0)
+								elseif entitylib.character.HumanoidRootPart.Velocity.Y <= -130 then
+									entitylib.character.HumanoidRootPart.Velocity += Vector3.new(0, 50, 0)
 								end
 							end
 						end
@@ -3474,7 +3478,7 @@ run(function()
 			if callback then
 				Speed:Clean(runService.PreSimulation:Connect(function(dt)
 					bedwars.StatefulEntityKnockbackController.lastImpulseTime = callback and math.huge or time()
-					if entitylib.isAlive and not Fly.Enabled and not LongJump.Enabled and isnetworkowner(entitylib.character.RootPart) then
+					if entitylib.isAlive and not Fly.Enabled and not LongJump.Enabled and isnetworkowner(entitylib.character.RootPart) and tick() > FlyLandTick then
 						local state = entitylib.character.Humanoid:GetState()
 						if state == Enum.HumanoidStateType.Climbing then return end
 	
