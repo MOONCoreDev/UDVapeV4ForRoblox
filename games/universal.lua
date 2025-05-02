@@ -7117,7 +7117,7 @@ run(function()
 				end
 			end
 		end,
-		Tooltip = 'Enabled chat in game.'
+		Tooltip = 'Enables chat in game.'
 	})
 end)
 	
