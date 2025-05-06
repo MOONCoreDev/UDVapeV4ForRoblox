@@ -3517,17 +3517,18 @@ run(function()
 		if vape.ThreadFix then
 			setthreadidentity(8)
 		end
-		local EntityArrow = Instance.new('ImageLabel')
-		EntityArrow.Size = UDim2.fromOffset(256, 256)
-		EntityArrow.Position = UDim2.fromScale(0.5, 0.5)
-		EntityArrow.AnchorPoint = Vector2.new(0.5, 0.5)
-		EntityArrow.BackgroundTransparency = 1
-		EntityArrow.BorderSizePixel = 0
-		EntityArrow.Visible = false
-		EntityArrow.Image = getcustomasset('newvapeud/assets/new/arrowmodule.png')
-		EntityArrow.ImageColor3 = entitylib.getEntityColor(ent) or Color3.fromHSV(Color.Hue, Color.Sat, Color.Value)
-		EntityArrow.Parent = Folder
-		Reference[ent] = EntityArrow
+	
+		local arrow = Instance.new('ImageLabel')
+		arrow.Size = UDim2.fromOffset(256, 256)
+		arrow.Position = UDim2.fromScale(0.5, 0.5)
+		arrow.AnchorPoint = Vector2.new(0.5, 0.5)
+		arrow.BackgroundTransparency = 1
+		arrow.BorderSizePixel = 0
+		arrow.Visible = false
+		arrow.Image = getcustomasset('newvapeud/assets/new/arrowmodule.png')
+		arrow.ImageColor3 = entitylib.getEntityColor(ent) or Color3.fromHSV(Color.Hue, Color.Sat, Color.Value)
+		arrow.Parent = Folder
+		Reference[ent] = arrow
 	end
 	
 	local function Removed(ent)
@@ -3549,21 +3550,21 @@ run(function()
 	end
 	
 	local function Loop()
-		for ent, EntityArrow in Reference do
+		for ent, arrow in Reference do
 			if Distance.Enabled then
 				local distance = entitylib.isAlive and (entitylib.character.RootPart.Position - ent.RootPart.Position).Magnitude or math.huge
 				if distance < DistanceLimit.ValueMin or distance > DistanceLimit.ValueMax then
-					EntityArrow.Visible = false
+					arrow.Visible = false
 					continue
 				end
 			end
 	
 			local _, rootVis = gameCamera:WorldToScreenPoint(ent.RootPart.Position)
-			EntityArrow.Visible = not rootVis
+			arrow.Visible = not rootVis
 			if rootVis then continue end
-			
-			local dir = (gameCamera.CFrame:PointToObjectSpace(ent.RootPart.Position) * Vector3.new(1, 0, 1)).Unit
-			EntityArrow.Rotation = math.deg(math.atan2(dir.Z, dir.X))
+	
+			local dir = CFrame.lookAlong(gameCamera.CFrame.Position, gameCamera.CFrame.LookVector * Vector3.new(1, 0, 1)):PointToObjectSpace(ent.RootPart.Position)
+			arrow.Rotation = math.deg(math.atan2(dir.Z, dir.X))
 		end
 	end
 	
@@ -3658,6 +3659,7 @@ run(function()
 		if vape.ThreadFix then
 			setthreadidentity(8)
 		end
+	
 		if Mode.Value == 'Highlight' then
 			local cham = Instance.new('Highlight')
 			cham.Adornee = ent.Character
@@ -4682,9 +4684,9 @@ run(function()
 			local nametag = Instance.new('TextLabel')
 			nametag.TextSize = 14 * Scale.Value
 			nametag.FontFace = FontOption.Value
-			local ize = getfontsize(removeTags(Strings[ent]), nametag.TextSize, nametag.FontFace, Vector2.new(100000, 100000))
+			local size = getfontsize(removeTags(Strings[ent]), nametag.TextSize, nametag.FontFace, Vector2.new(100000, 100000))
 			nametag.Name = ent.Player and ent.Player.Name or ent.Character.Name
-			nametag.Size = UDim2.fromOffset(ize.X + 8, ize.Y + 7)
+			nametag.Size = UDim2.fromOffset(size.X + 8, size.Y + 7)
 			nametag.AnchorPoint = Vector2.new(0.5, 1)
 			nametag.BackgroundColor3 = Color3.new()
 			nametag.BackgroundTransparency = Background.Value
@@ -4700,9 +4702,6 @@ run(function()
 			if not Targets.Players.Enabled and ent.Player then return end
 			if not Targets.NPCs.Enabled and ent.NPC then return end
 			if Teammates.Enabled and (not ent.Targetable) and (not ent.Friend) then return end
-			if vape.ThreadFix then
-				setthreadidentity(8)
-			end
 	
 			local nametag = {}
 			nametag.BG = Drawing.new('Square')
@@ -4753,10 +4752,10 @@ run(function()
 				Reference[ent] = nil
 				Strings[ent] = nil
 				Sizes[ent] = nil
-				for _, v2 in v do
+				for _, obj in v do
 					pcall(function()
-						v2.Visible = false
-						v2:Remove()
+						obj.Visible = false
+						obj:Remove()
 					end)
 				end
 			end
@@ -4782,8 +4781,8 @@ run(function()
 					Strings[ent] = '<font color="rgb(85, 255, 85)">[</font><font color="rgb(255, 255, 255)">%s</font><font color="rgb(85, 255, 85)">]</font> '..Strings[ent]
 				end
 	
-				local ize = getfontsize(removeTags(Strings[ent]), nametag.TextSize, nametag.FontFace, Vector2.new(100000, 100000))
-				nametag.Size = UDim2.fromOffset(ize.X + 8, ize.Y + 7)
+				local size = getfontsize(removeTags(Strings[ent]), nametag.TextSize, nametag.FontFace, Vector2.new(100000, 100000))
+				nametag.Size = UDim2.fromOffset(size.X + 8, size.Y + 7)
 				nametag.Text = Strings[ent]
 			end
 		end,
@@ -4868,7 +4867,7 @@ run(function()
 					end
 				end
 	
-				local headPos, headVis = gameCamera:WorldToScreenPoint(ent.RootPart.Position + Vector3.new(0, ent.HipHeight + 1, 0))
+				local headPos, headVis = gameCamera:WorldToViewportPoint(ent.RootPart.Position + Vector3.new(0, ent.HipHeight + 1, 0))
 				nametag.Text.Visible = headVis
 				nametag.BG.Visible = headVis
 				if not headVis then
@@ -4883,8 +4882,8 @@ run(function()
 						Sizes[ent] = mag
 					end
 				end
-				nametag.BG.Position = Vector2.new(headPos.X - (nametag.BG.Size.X / 2), headPos.Y + (nametag.BG.Size.Y / 2))
-				nametag.Text.Position = nametag.BG.Position + Vector2.new(4, 2.5)
+				nametag.BG.Position = Vector2.new(headPos.X - (nametag.BG.Size.X / 2), headPos.Y - nametag.BG.Size.Y)
+				nametag.Text.Position = nametag.BG.Position + Vector2.new(4, 3)
 			end
 		end
 	}
@@ -5191,20 +5190,20 @@ run(function()
 			setthreadidentity(8)
 		end
 	
-		local EntityDot = Instance.new('Frame')
-		EntityDot.Size = UDim2.fromOffset(4, 4)
-		EntityDot.AnchorPoint = Vector2.new(0.5, 0.5)
-		EntityDot.BackgroundColor3 = entitylib.getEntityColor(ent) or Color3.fromHSV(PlayerColor.Hue, PlayerColor.Sat, PlayerColor.Value)
-		EntityDot.Parent = bkg
-		local EntityCorner = Instance.new('UICorner')
-		EntityCorner.CornerRadius = UDim.new(DotStyle.Value == 'Circles' and 1 or 0, 0)
-		EntityCorner.Parent = EntityDot
-		local EntityStroke = Instance.new('UIStroke')
-		EntityStroke.Color = Color3.new()
-		EntityStroke.Thickness = 1
-		EntityStroke.Transparency = 0.8
-		EntityStroke.Parent = EntityDot
-		Reference[ent] = EntityDot
+		local dot = Instance.new('Frame')
+		dot.Size = UDim2.fromOffset(4, 4)
+		dot.AnchorPoint = Vector2.new(0.5, 0.5)
+		dot.BackgroundColor3 = entitylib.getEntityColor(ent) or Color3.fromHSV(PlayerColor.Hue, PlayerColor.Sat, PlayerColor.Value)
+		dot.Parent = bkg
+		local corner = Instance.new('UICorner')
+		corner.CornerRadius = UDim.new(DotStyle.Value == 'Circles' and 1 or 0, 0)
+		corner.Parent = dot
+		local stroke = Instance.new('UIStroke')
+		stroke.Color = Color3.new()
+		stroke.Thickness = 1
+		stroke.Transparency = 0.8
+		stroke.Parent = dot
+		Reference[ent] = dot
 	end
 	
 	local function Removed(ent)
@@ -5239,21 +5238,21 @@ run(function()
 					Added(ent)
 				end))
 				Radar:Clean(vape.Categories.Friends.ColorUpdate.Event:Connect(function()
-					for ent, EntityDot in Reference do
-						EntityDot.BackgroundColor3 = entitylib.getEntityColor(ent) or Color3.fromHSV(PlayerColor.Hue, PlayerColor.Sat, PlayerColor.Value)
+					for ent, dot in Reference do
+						dot.BackgroundColor3 = entitylib.getEntityColor(ent) or Color3.fromHSV(PlayerColor.Hue, PlayerColor.Sat, PlayerColor.Value)
 					end
 				end))
 				Radar:Clean(runService.RenderStepped:Connect(function()
-					for ent, EntityDot in Reference do
+					for ent, dot in Reference do
 						if entitylib.isAlive then
 							local dt = CFrame.lookAlong(entitylib.character.RootPart.Position, gameCamera.CFrame.LookVector * Vector3.new(1, 0, 1)):PointToObjectSpace(ent.RootPart.Position)
-							EntityDot.Position = UDim2.fromOffset(Clamp.Enabled and math.clamp(108 + dt.X, 2, 214) or 108 + dt.X, Clamp.Enabled and math.clamp(108 + dt.Z, 8, 214) or 108 + dt.Z)
+							dot.Position = UDim2.fromOffset(Clamp.Enabled and math.clamp(108 + dt.X, 2, 214) or 108 + dt.X, Clamp.Enabled and math.clamp(108 + dt.Z, 8, 214) or 108 + dt.Z)
 						end
 					end
 				end))
 			else
-				for ent in Reference do 
-					Removed(ent) 
+				for ent in Reference do
+					Removed(ent)
 				end
 			end
 		end
@@ -5279,8 +5278,8 @@ run(function()
 	PlayerColor = Radar:CreateColorSlider({
 		Name = 'Player Color',
 		Function = function(hue, sat, val)
-			for ent, EntityDot in Reference do
-				EntityDot.BackgroundColor3 = entitylib.getEntityColor(ent) or Color3.fromHSV(hue, sat, val)
+			for ent, dot in Reference do
+				dot.BackgroundColor3 = entitylib.getEntityColor(ent) or Color3.fromHSV(hue, sat, val)
 			end
 		end
 	})
@@ -6016,7 +6015,7 @@ run(function()
 				local check
 				AutoRejoin:Clean(guiService.ErrorMessageChanged:Connect(function(str)
 					if (not check or guiService:GetErrorCode() ~= Enum.ConnectionError.DisconnectLuaKick) and guiService:GetErrorCode() ~= Enum.ConnectionError.DisconnectConnectionLost and not str:lower():find('ban') then
-						check = true
+						check = 
 						if Sort.Value == 'Rejoin' then
 							teleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId)
 						else
@@ -6026,7 +6025,7 @@ run(function()
 				end))
 			end
 		end,
-		Tooltip = 'Automatically rejoins into old server or new server if you get disconnected / kicked'
+		Tooltip = 'Automatically rejoins into a new server if you get disconnected / kicked'
 	})
 	Sort = AutoRejoin:CreateDropdown({
 		Name = 'Sort',
@@ -6062,9 +6061,9 @@ run(function()
 					if physicsrate ~= oldphys or senderrate ~= oldsend then
 						setfflag('S2PhysicsSenderRate', physicsrate)
 						setfflag('DataSenderRate', senderrate)
-						oldphys, oldsend = physicsrate, oldsend
+						oldphys, oldsend = physicsrate, senderrate
 					end
-					
+	
 					task.wait(0.03)
 				until (not Blink.Enabled and not teleported)
 			else
@@ -7863,7 +7862,7 @@ run(function()
 		Suffix = '%'
 	})
 end)
-	
+
 run(function()
 	local Speedmeter
 	local label

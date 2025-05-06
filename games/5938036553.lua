@@ -752,7 +752,7 @@ run(function()
 		Function = function(callback)
 			if callback then 
 				repeat
-					for i, v in frontlines.Throwables do 
+					for _, v in frontlines.Throwables do 
 						if v.model and v.network_ownership then 
 							local ent = entitylib.EntityPosition({
 								Range = Range.Value,
@@ -763,16 +763,16 @@ run(function()
 	
 							if ent then 
 								local id
-								for i2, v2 in frontlines.Main.globals.soldier_hitbox_hash do 
-									if i2.Weld.Part0 == v.RootPart then
-										id = v2
+								for i, hash in frontlines.Main.globals.soldier_hitbox_hash do 
+									if i.Weld.Part0 == v.RootPart then
+										id = hash
 										break
 									end
 								end
-								
+
 								if id then
 									v.model:PivotTo(ent.RootPart.Root_M.Spine1_M.WorldCFrame)
-								end 
+								end
 							end
 						end
 					end
