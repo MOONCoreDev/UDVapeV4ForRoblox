@@ -6015,7 +6015,7 @@ run(function()
 				local check
 				AutoRejoin:Clean(guiService.ErrorMessageChanged:Connect(function(str)
 					if (not check or guiService:GetErrorCode() ~= Enum.ConnectionError.DisconnectLuaKick) and guiService:GetErrorCode() ~= Enum.ConnectionError.DisconnectConnectionLost and not str:lower():find('ban') then
-						check = 
+						check = true
 						if Sort.Value == 'Rejoin' then
 							teleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId)
 						else

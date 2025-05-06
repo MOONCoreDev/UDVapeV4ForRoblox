@@ -3198,7 +3198,7 @@ run(function()
 	})
 	Mode = NoFall:CreateDropdown({
 		Name = 'Mode',
-		List = {'Landed', 'Velocity'}
+		List = {'Remote', 'Landed', 'Velocity'}
 	})
 end)
 
@@ -3564,7 +3564,7 @@ run(function()
 			return a.Name > b.Name 
 		end)
 	
-		for _, part in bedparts do
+		for _, part in parts do
 			if part:IsA('BasePart') and part.Name ~= 'Blanket' then
 				local handle = Instance.new('BoxHandleAdornment')
 				handle.Size = part.Size + Vector3.new(.01, .01, .01)
