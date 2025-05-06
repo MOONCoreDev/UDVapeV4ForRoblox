@@ -2500,6 +2500,7 @@ function mainapi:Uninject()
 	shared.vape = nil
 	shared.vapereload = nil
 	shared.VapeIndependent = nil
+	shared.VapeDeveloper = nil
 end
 
 gui = Instance.new('ScreenGui')
