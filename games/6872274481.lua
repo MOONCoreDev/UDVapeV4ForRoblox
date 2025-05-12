@@ -663,15 +663,16 @@ run(function()
 	local OldGet, OldBreak = Client.Get
 
 	bedwars = setmetatable({
+		AbilityController = Flamework.resolveDependency('@easy-games/game-core:client/controllers/ability/ability-controller@AbilityController'),
 		AnimationType = require(replicatedStorage.TS.animation['animation-type']).AnimationType,
 		AnimationUtil = require(replicatedStorage['rbxts_include']['node_modules']['@easy-games']['game-core'].out['shared'].util['animation-util']).AnimationUtil,
 		AppController = require(replicatedStorage['rbxts_include']['node_modules']['@easy-games']['game-core'].out.client.controllers['app-controller']).AppController,
-		AbilityController = Flamework.resolveDependency('@easy-games/game-core:client/controllers/ability/ability-controller@AbilityController'),
+		BedBreakEffectMeta = require(replicatedStorage.TS.locker['break-bed-effect']['break-bed-effect-meta']).BreakBedEffectMeta,
 		BedwarsKitMeta = require(replicatedStorage.TS.games.bedwars.kit['bedwars-kit-meta']).BedwarsKitMeta,
 		BlockBreaker = Knit.Controllers.BlockBreakController.blockBreaker,
 		BlockController = require(replicatedStorage['rbxts_include']['node_modules']['@easy-games']['block-engine'].out).BlockEngine,
-		BlockPlacer = require(replicatedStorage['rbxts_include']['node_modules']['@easy-games']['block-engine'].out.client.placement['block-placer']).BlockPlacer,
 		BlockEngine = require(lplr.PlayerScripts.TS.lib['block-engine']['client-block-engine']).ClientBlockEngine,
+		BlockPlacer = require(replicatedStorage['rbxts_include']['node_modules']['@easy-games']['block-engine'].out.client.placement['block-placer']).BlockPlacer,
 		BowConstantsTable = debug.getupvalue(Knit.Controllers.ProjectileController.enableBeam, 8),
 		ClickHold = require(replicatedStorage['rbxts_include']['node_modules']['@easy-games']['game-core'].out.client.ui.lib.util['click-hold']).ClickHold,
 		Client = Client,
@@ -701,8 +702,9 @@ run(function()
 		KillFeedController = Flamework.resolveDependency('client/controllers/game/kill-feed/kill-feed-controller@KillFeedController'),
 		Knit = Knit,
 		KnockbackUtil = require(replicatedStorage.TS.damage['knockback-util']).KnockbackUtil,
-		NametagController = Knit.Controllers.NametagController,
 		MageKitUtil = require(replicatedStorage.TS.games.bedwars.kit.kits.mage['mage-kit-util']).MageKitUtil,
+		NametagController = Knit.Controllers.NametagController,
+		PartyController = Flamework.resolveDependency('@easy-games/lobby:client/controllers/party-controller@PartyController'),
 		ProjectileMeta = require(replicatedStorage.TS.projectile['projectile-meta']).ProjectileMeta,
 		QueryUtil = require(replicatedStorage['rbxts_include']['node_modules']['@easy-games']['game-core'].out).GameQueryUtil,
 		QueueCard = require(lplr.PlayerScripts.TS.controllers.global.queue.ui['queue-card']).QueueCard,
@@ -2597,7 +2599,7 @@ run(function()
 								end
 
 								if delta.Magnitude > AttackRange.Value then continue end
-								if delta.Magnitude < 14.4 and (tick() - swingCooldown) < ChargeTime.Value then continue end
+								if delta.Magnitude < 14.4 and (tick() - swingCooldown) < math.max(ChargeTime.Value, 0.02) then continue end
 
 								local actualRoot = v.Character.PrimaryPart
 								if actualRoot then
@@ -3155,13 +3157,12 @@ end)
 run(function()
 	local NoFall
 	local Mode
+	local rayParams = RaycastParams.new()
 	local groundHit
- 	task.spawn(function()
- 		groundHit = bedwars.Client:Get(remotes.GroundHit).instance
- 	end)
+	task.spawn(function()
+		groundHit = bedwars.Client:Get(remotes.GroundHit).instance
+	end)
 
-	local params = RaycastParams.new()
-	
 	NoFall = vape.Categories.Blatant:CreateModule({
 		Name = 'NoFall',
 		Function = function(callback)
@@ -3169,27 +3170,33 @@ run(function()
 				local tracked = 0
 				repeat
 					if entitylib.isAlive then
-						if Mode.Value == 'Landed' then
-							tracked = entitylib.character.Humanoid.FloorMaterial == Enum.Material.Air and math.min(tracked, entitylib.character.RootPart.AssemblyLinearVelocity.Y) or 0
-							if tracked < -85 then
-								entitylib.character.Humanoid:ChangeState(Enum.HumanoidStateType.Landed)
-							end
-						elseif Mode.Value == 'Remote' then
-							tracked = entitylib.character.Humanoid.FloorMaterial == Enum.Material.Air and math.min(tracked, entitylib.character.RootPart.AssemblyLinearVelocity.Y) or 0
-							if tracked < -85 then
+						local root = entitylib.character.RootPart
+						tracked = entitylib.character.Humanoid.FloorMaterial == Enum.Material.Air and math.min(tracked, root.AssemblyLinearVelocity.Y) or 0
+	
+						if tracked < -85 then
+							if Mode.Value == 'Packet' then
 								groundHit:FireServer(nil, Vector3.new(0, tracked, 0), workspace:GetServerTimeNow())
-							end
-						else
-							params.FilterDescendantsInstances = {lplr.Character}
-							if not workspace:Raycast(entitylib.character.HumanoidRootPart.Position, Vector3.new(0, -11, 0), params) and workspace:Raycast(entitylib.character.HumanoidRootPart.Position, Vector3.new(0, -31, 0), params) then
-								if entitylib.character.HumanoidRootPart.Velocity.Y <= -70.5 then
-									entitylib.character.HumanoidRootPart.Velocity += Vector3.new(0, 20, 0)
-								elseif entitylib.character.HumanoidRootPart.Velocity.Y <= -130 then
-									entitylib.character.HumanoidRootPart.Velocity += Vector3.new(0, 50, 0)
+							else
+								rayParams.FilterDescendantsInstances = {lplr.Character, gameCamera}
+								rayParams.CollisionGroup = root.CollisionGroup
+	
+								local rootSize = root.Size.Y / 2 + entitylib.character.HipHeight
+								if Mode.Value == 'TP' then
+									local ray = workspace:Blockcast(root.CFrame, Vector3.new(3, 3, 3), Vector3.new(0, -1000, 0), rayParams)
+									if ray then
+										root.CFrame -= Vector3.new(0, root.Position.Y - (ray.Position.Y + rootSize), 0)
+									end
+								else
+									local ray = workspace:Blockcast(root.CFrame, Vector3.new(3, 3, 3), Vector3.new(0, (tracked * 0.1) - rootSize, 0), rayParams)
+									if ray then
+										tracked = 0
+										root.AssemblyLinearVelocity = Vector3.new(root.AssemblyLinearVelocity.X, -80, root.AssemblyLinearVelocity.Z)
+									end
 								end
 							end
 						end
 					end
+	
 					task.wait(0.03)
 				until not NoFall.Enabled
 			end
@@ -3198,7 +3205,7 @@ run(function()
 	})
 	Mode = NoFall:CreateDropdown({
 		Name = 'Mode',
-		List = {'Remote', 'Landed', 'Velocity'}
+		List = {'Packet', 'TP', 'Velocity'}
 	})
 end)
 
@@ -3311,6 +3318,14 @@ run(function()
 	
 						if plr.Character.PrimaryPart:FindFirstChild('rbxassetid://8200754399') then
 							playerGravity = 6
+						end
+
+						if plr.Player:GetAttribute('IsOwlTarget') then
+							for _, owl in collectionService:GetTagged('Owl') do
+								if owl:GetAttribute('Target') == plr.Player.UserId and owl:GetAttribute('Status') == 2 then
+									playerGravity = 0
+								end
+							end
 						end
 	
 						local newlook = CFrame.new(offsetpos, plr[TargetPart.Value].Position) * CFrame.new(projmeta.projectile == 'owl_projectile' and Vector3.zero or Vector3.new(bedwars.BowConstantsTable.RelX, bedwars.BowConstantsTable.RelY, bedwars.BowConstantsTable.RelZ))
@@ -4714,7 +4729,7 @@ run(function()
 		Name = 'AutoKit',
 		Function = function(callback)
 			if callback then
-				repeat task.wait() until store.equippedKit ~= '' or (not AutoKit.Enabled)
+				repeat task.wait() until store.equippedKit ~= '' and store.matchState ~= 0 or (not AutoKit.Enabled)
 				if AutoKit.Enabled and AutoKitFunctions[store.equippedKit] and Toggles[store.equippedKit].Enabled then
 					AutoKitFunctions[store.equippedKit]()
 				end
@@ -7394,6 +7409,7 @@ end)
 run(function()
 	local Breaker
 	local Range
+	local BreakSpeed
 	local UpdateRate
 	local Custom
 	local Bed
@@ -7530,7 +7546,7 @@ run(function()
 					end
 				end
 
-				task.wait(InstantBreak.Enabled and (store.damageBlockFail > tick() and 4.5 or 0) or 0.25)
+				task.wait(InstantBreak.Enabled and (store.damageBlockFail > tick() and 4.5 or 0) or BreakSpeed.Value)
 
 				return true
 			end
@@ -7603,6 +7619,14 @@ run(function()
 		Suffix = function(val)
 			return val == 1 and 'stud' or 'studs'
 		end
+	})
+	BreakSpeed = Breaker:CreateSlider({
+		Name = 'Break speed',
+		Min = 0,
+		Max = 0.3,
+		Default = 0.25,
+		Decimal = 100,
+		Suffix = 'seconds'
 	})
 	UpdateRate = Breaker:CreateSlider({
 		Name = 'Update rate',
