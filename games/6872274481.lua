@@ -20,6 +20,7 @@ local httpService = cloneref(game:GetService('HttpService'))
 local textChatService = cloneref(game:GetService('TextChatService'))
 local collectionService = cloneref(game:GetService('CollectionService'))
 local contextActionService = cloneref(game:GetService('ContextActionService'))
+local guiService = cloneref(game:GetService('GuiService'))
 local coreGui = cloneref(game:GetService('CoreGui'))
 local starterGui = cloneref(game:GetService('StarterGui'))
 
@@ -66,6 +67,7 @@ local HitBoxes = {}
 local InfiniteFly = {}
 local TrapDisabler
 local AntiFallPart
+
 local bedwars, remotes, sides, oldinvrender, oldswing = {}, {}, {}
 
 local function addBlur(parent)
@@ -1219,14 +1221,14 @@ run(function()
 			if callback then
 				AimAssist:Clean(runService.Heartbeat:Connect(function(dt)
 					if entitylib.isAlive and store.hand.toolType == 'sword' and ((not ClickAim.Enabled) or (tick() - bedwars.SwordController.lastSwing) < 0.4) then
-						local ent = KillauraTarget.Enabled and store.KillauraTarget or entitylib.EntityPosition({
+						local ent = not KillauraTarget.Enabled and entitylib.EntityPosition({
 							Range = Distance.Value,
 							Part = 'RootPart',
 							Wallcheck = Targets.Walls.Enabled,
 							Players = Targets.Players.Enabled,
 							NPCs = Targets.NPCs.Enabled,
 							Sort = sortmethods[Sort.Value]
-						})
+						}) or store.KillauraTarget
 	
 						if ent then
 							local delta = (ent.RootPart.Position - entitylib.character.RootPart.Position)
@@ -2040,7 +2042,7 @@ end)
 
 --[[
 run(function()
-<<<<<<< HEAD
+
 	local Value
 	local VerticalValue
 	local WallCheck
@@ -2674,7 +2676,7 @@ run(function()
 						lplr.PlayerGui.MobileUI['2'].Visible = true
 					end)
 				end
-				debug.setupvalue(bedwars.SwordController.playSwordEffect, 6, bedwars.Knit)
+				debug.setupvalue(oldSwing or bedwars.SwordController.playSwordEffect, 6, bedwars.Knit)
 				debug.setupvalue(bedwars.ScytheController.playLocalAnimation, 3, bedwars.Knit)
 				Attacking = false
 				if armC0 then
@@ -3364,6 +3366,14 @@ run(function()
 							end
 						end
 	
+						if plr.Player:GetAttribute('IsOwlTarget') then
+							for _, owl in collectionService:GetTagged('Owl') do
+								if owl:GetAttribute('Target') == plr.Player.UserId and owl:GetAttribute('Status') == 2 then
+									playerGravity = 0
+								end
+							end
+						end
+	
 						local newlook = CFrame.new(offsetpos, plr[TargetPart.Value].Position) * CFrame.new(projmeta.projectile == 'owl_projectile' and Vector3.zero or Vector3.new(bedwars.BowConstantsTable.RelX, bedwars.BowConstantsTable.RelY, bedwars.BowConstantsTable.RelZ))
 						local calc = prediction.SolveTrajectory(newlook.p, projSpeed, gravity, plr[TargetPart.Value].Position, projmeta.projectile == 'telepearl' and Vector3.zero or plr[TargetPart.Value].Velocity, playerGravity, plr.HipHeight, plr.Jumping and 42.6 or nil, rayCheck)
 						if calc then
@@ -3611,6 +3621,7 @@ run(function()
 		BedFolder.Parent = Folder
 		Reference[bed] = BedFolder
 		local parts = bed:GetChildren()
+
 		table.sort(parts, function(a, b) 
 			return a.Name > b.Name 
 		end)
@@ -3650,6 +3661,7 @@ run(function()
 						Reference[bed] = nil
 					end
 				end))
+
 				for _, bed in collectionService:GetTagged('bed') do 
 					Added(bed)
 				end
@@ -4660,39 +4672,25 @@ run(function()
 			until not AutoKit.Enabled
 		end,
 		void_dragon = function()
-			local old = bedwars.VoidDragonController.voidDragonActive
 			local oldflap = bedwars.VoidDragonController.flapWings
+			local flapped
 	
-			bedwars.VoidDragonController.voidDragonActive = function(self, ...)
-				local Client = bedwars.Client
-				local Remote = remotes.DragonEndFly
-				self.SpeedMaid:GiveTask(function()
-					Client:Get(Remote):SendToServer()
-				end)
-	
-				task.spawn(function()
-					for i = 1, 10 do
-						if bedwars.Client:Get(remotes.DragonFly):CallServer() then
-							local modifier = bedwars.SprintController:getMovementStatusModifier():addModifier({
-								blockSprint = true,
-								constantSpeedMultiplier = 1.7
-							})
-							self.SpeedMaid:GiveTask(modifier)
-							break
-						end
-					end
-				end)
-	
-				return old(self, ...)
+			bedwars.VoidDragonController.flapWings = function(self)
+				if not flapped and bedwars.Client:Get(remotes.DragonFly):CallServer() then
+					local modifier = bedwars.SprintController:getMovementStatusModifier():addModifier({
+						blockSprint = true,
+						constantSpeedMultiplier = 2
+					})
+					self.SpeedMaid:GiveTask(modifier)
+					self.SpeedMaid:GiveTask(function()
+						flapped = false
+					end)
+					flapped = true
+				end
 			end
-			bedwars.VoidDragonController.flapWings = function() end
 	
 			AutoKit:Clean(function()
-				bedwars.VoidDragonController.voidDragonActive = old
 				bedwars.VoidDragonController.flapWings = oldflap
-				task.spawn(function()
-					bedwars.Client:Get(remotes.DragonEndFly):SendToServer()
-				end)
 			end)
 	
 			repeat
@@ -5442,6 +5440,7 @@ run(function()
 	local StaffDetector
 	local Mode
 	local Clans
+	local Party
 	local Profile
 	local Users
 	local blacklistedclans = {'gg', 'gg2', 'DV', 'DV2'}
@@ -5465,6 +5464,10 @@ run(function()
 	
 		notif('StaffDetector', 'Staff Detected ('..checktype..'): '..plr.Name..' ('..plr.UserId..')', 60, 'alert')
 		whitelist.customtags[plr.Name] = {{text = 'GAME STAFF', color = Color3.new(1, 0, 0)}}
+	
+		if Party.Enabled and not checktype:find('clan') then
+			bedwars.PartyController:leaveParty()
+		end
 	
 		if Mode.Value == 'Uninject' then
 			task.spawn(function()
@@ -5582,6 +5585,9 @@ run(function()
 	Clans = StaffDetector:CreateToggle({
 		Name = 'Blacklist clans',
 		Default = true
+	})
+	Party = StaffDetector:CreateToggle({
+		Name = 'Leave party'
 	})
 	Profile = StaffDetector:CreateTextBox({
 		Name = 'Profile',
@@ -6186,6 +6192,134 @@ run(function()
 		Suffix = function(val)
 			return val == 1 and 'stud' or 'studs'
 		end
+	})
+end)
+	
+run(function()
+	local AutoBank
+	local UIToggle
+	local UI
+	local Chests
+	local Items = {}
+	
+	local function addItem(itemType, shop)
+		local item = Instance.new('ImageLabel')
+		item.Image = bedwars.getIcon({itemType = itemType}, true)
+		item.Size = UDim2.fromOffset(32, 32)
+		item.Name = itemType
+		item.BackgroundTransparency = 1
+		item.LayoutOrder = #UI:GetChildren()
+		item.Parent = UI
+		local itemtext = Instance.new('TextLabel')
+		itemtext.Name = 'Amount'
+		itemtext.Size = UDim2.fromScale(1, 1)
+		itemtext.BackgroundTransparency = 1
+		itemtext.Text = ''
+		itemtext.TextColor3 = Color3.new(1, 1, 1)
+		itemtext.TextSize = 16
+		itemtext.TextStrokeTransparency = 0.3
+		itemtext.Font = Enum.Font.Arial
+		itemtext.Parent = item
+		Items[itemType] = {Object = itemtext, Type = shop}
+	end
+	
+	local function refreshBank(echest)
+		for i, v in Items do
+			local item = echest:FindFirstChild(i)
+			v.Object.Text = item and item:GetAttribute('Amount') or ''
+		end
+	end
+	
+	local function nearChest()
+		if entitylib.isAlive then
+			local pos = entitylib.character.RootPart.Position
+			for _, chest in Chests do
+				if (chest.Position - pos).Magnitude < 20 then
+					return true
+				end
+			end
+		end
+	end
+	
+	local function handleState()
+		local chest = replicatedStorage.Inventories:FindFirstChild(lplr.Name..'_personal')
+		if not chest then return end
+	
+		local mapCF = workspace.MapCFrames:FindFirstChild((lplr:GetAttribute('Team') or 1)..'_spawn')
+		if mapCF and (entitylib.character.RootPart.Position - mapCF.Value.Position).Magnitude < 80 then
+			for _, v in chest:GetChildren() do
+				local item = Items[v.Name]
+				if item then
+					task.spawn(function()
+						bedwars.Client:GetNamespace('Inventory'):Get('ChestGetItem'):CallServer(chest, v)
+						refreshBank(chest)
+					end)
+				end
+			end
+		else
+			for _, v in store.inventory.inventory.items do
+				local item = Items[v.itemType]
+				if item then
+					task.spawn(function()
+						bedwars.Client:GetNamespace('Inventory'):Get('ChestGiveItem'):CallServer(chest, v.tool)
+						refreshBank(chest)
+					end)
+				end
+			end
+		end
+	end
+	
+	AutoBank = vape.Categories.Inventory:CreateModule({
+		Name = 'AutoBank',
+		Function = function(callback)
+			if callback then
+				Chests = collection('personal-chest', AutoBank)
+				UI = Instance.new('Frame')
+				UI.Size = UDim2.new(1, 0, 0, 32)
+				UI.Position = UDim2.fromOffset(0, -240)
+				UI.BackgroundTransparency = 1
+				UI.Visible = UIToggle.Enabled
+				UI.Parent = vape.gui
+				AutoBank:Clean(UI)
+				local Sort = Instance.new('UIListLayout')
+				Sort.FillDirection = Enum.FillDirection.Horizontal
+				Sort.HorizontalAlignment = Enum.HorizontalAlignment.Center
+				Sort.SortOrder = Enum.SortOrder.LayoutOrder
+				Sort.Parent = UI
+				addItem('iron', true)
+				addItem('gold', true)
+				addItem('diamond', false)
+				addItem('emerald', true)
+				addItem('void_crystal', true)
+	
+				repeat
+					local hotbar = lplr.PlayerGui:FindFirstChild('hotbar')
+					hotbar = hotbar and hotbar['1']:FindFirstChild('HotbarHealthbarContainer')
+					if hotbar then
+						UI.Position = UDim2.fromOffset(0, (hotbar.AbsolutePosition.Y + guiService:GetGuiInset().Y) - 40)
+					end
+	
+					local newState = nearChest()
+					if newState then
+						handleState()
+					end
+	
+					task.wait(0.1)
+				until (not AutoBank.Enabled)
+			else
+				table.clear(Items)
+			end
+		end,
+		Tooltip = 'Automatically puts resources in ender chest'
+	})
+	UIToggle = AutoBank:CreateToggle({
+		Name = 'UI',
+		Function = function(callback)
+			if AutoBank.Enabled then
+				UI.Visible = callback
+			end
+		end,
+		Default = true
 	})
 end)
 	
@@ -7585,8 +7719,8 @@ run(function()
 					end
 				end
 
-				task.wait(InstantBreak.Enabled and (store.damageBlockFail > tick() and 4.5 or 0) or BreakSpeed.Value)
 
+				task.wait(InstantBreak.Enabled and (store.damageBlockFail > tick() and 4.5 or 0) or BreakSpeed.Value)
 				return true
 			end
 		end
@@ -7718,6 +7852,41 @@ run(function()
 	LimitItem = Breaker:CreateToggle({
 		Name = 'Limit to items',
 		Tooltip = 'Only breaks when tools are held'
+	})
+end)
+	
+run(function()
+	local BedBreakEffect
+	local Mode
+	local List
+	local NameToId = {}
+	
+	BedBreakEffect = vape.Legit:CreateModule({
+		Name = 'Bed Break Effect',
+		Function = function(callback)
+			if callback then
+	            BedBreakEffect:Clean(vapeEvents.BedwarsBedBreak.Event:Connect(function(data)
+	                firesignal(bedwars.Client:Get('BedBreakEffectTriggered').instance.OnClientEvent, {
+	                    player = data.player,
+	                    position = data.bedBlockPosition * 3,
+	                    effectType = NameToId[List.Value],
+	                    teamId = data.brokenBedTeam.id,
+	                    centerBedPosition = data.bedBlockPosition * 3
+	                })
+	            end))
+	        end
+		end,
+		Tooltip = 'Custom bed break effects'
+	})
+	local BreakEffectName = {}
+	for i, v in bedwars.BedBreakEffectMeta do
+		table.insert(BreakEffectName, v.name)
+		NameToId[v.name] = i
+	end
+	table.sort(BreakEffectName)
+	List = BedBreakEffect:CreateDropdown({
+		Name = 'Effect',
+		List = BreakEffectName
 	})
 end)
 	

@@ -29,6 +29,7 @@ local function downloadFile(path, func)
 end
 
 vape.Place = 5938036553
+
 if isfile('newvapeud/games/'..vape.Place..'.lua') then
 	loadstring(readfile('newvapeud/games/'..vape.Place..'.lua'), 'bedwars')()
 else
