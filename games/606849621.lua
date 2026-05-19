@@ -368,6 +368,27 @@ for _, v in {'Reach', 'TriggerBot', 'Disabler', 'AntiFall', 'HitBoxes', 'Killaur
 	vape:Remove(v)
 end
 run(function()
+	local ForceHeadshot
+	
+	ForceHeadshot = vape.Categories.Combat:CreateModule({
+		Name = 'ForceHeadshot',
+		Function = function(callback)
+			if callback then
+				local hook
+				hook = hookfunction(jb.GunController.BulletEmitterOnLocalHitPlayer, function(...)
+					local shotData = select(15, ...)
+					shotData.isHeadshot = true
+					return hook(...)
+				end)
+			else
+				restorefunction(jb.GunController.BulletEmitterOnLocalHitPlayer)
+			end
+		end,
+		Tooltip = 'Modifies bullets to always do headshot damage.'
+	})
+end)
+	
+run(function()
 	local SilentAim
 	local Target
 	local Mode
@@ -389,6 +410,7 @@ run(function()
 			if CircleObject then
 				CircleObject.Visible = callback and Mode.Value == 'Mouse'
 			end
+	
 			if callback then
 				Hooked = jb.GunController.TransformLocalMousePosition
 				jb.GunController.TransformLocalMousePosition = function(self, pos)
@@ -418,11 +440,11 @@ run(function()
 				end
 	
 				repeat
-					if CircleObject then 
-						CircleObject.Position = inputService:GetMouseLocation() 
+					if CircleObject then
+						CircleObject.Position = inputService:GetMouseLocation()
 					end
 	
-					if Instant.Enabled then 
+					if Instant.Enabled then
 						local item = jb.ItemSystemController:GetLocalEquipped()
 						if item and item.BulletEmitter then
 							rawset(item.BulletEmitter, 'LastUpdate', tick() - (item.BulletEmitter.LifeSpan - 0.1))
@@ -457,8 +479,8 @@ run(function()
 				CircleObject.Radius = val
 			end
 		end,
-		Suffix = function(val) 
-			return val == 1 and 'stud' or 'studs' 
+		Suffix = function(val)
+			return val == 1 and 'stud' or 'studs'
 		end
 	})
 	SilentAim:CreateToggle({
@@ -485,13 +507,13 @@ run(function()
 		end
 	})
 	CircleColor = SilentAim:CreateColorSlider({
-		Name = 'Circle Color', 
+		Name = 'Circle Color',
 		Function = function(hue, sat, val)
 			if CircleObject then
 				CircleObject.Color = Color3.fromHSV(hue, sat, val)
 			end
-		end, 
-		Darker = true, 
+		end,
+		Darker = true,
 		Visible = false
 	})
 	CircleTransparency = SilentAim:CreateSlider({
@@ -509,50 +531,20 @@ run(function()
 		Visible = false
 	})
 	CircleFilled = SilentAim:CreateToggle({
-		Name = 'Circle Filled', 
+		Name = 'Circle Filled',
 		Function = function(callback)
 			if CircleObject then
 				CircleObject.Filled = callback
 			end
-		end, 
-		Darker = true, 
+		end,
+		Darker = true,
 		Visible = false
 	})
 	Instant = SilentAim:CreateToggle({Name = 'Hitscan Bullets'})
 end)
 	
 run(function()
-	local Wallbang = {Enabled = false}
-	
-	Wallbang = vape.Categories.Combat:CreateModule({
-		Name = 'Wallbang',
-		Function = function(callback)
-			if callback then
-				local hook
-				hook = hookfunction(jb.GunController.BulletEmitterOnLocalHitPlayer, function(...)
-					local shotData = select(15, ...)
-					shotData.isWallbang = nil
-					shotData.isHeadshot = true
-					return hook(...)
-				end)
-	
-				repeat
-					local item = jb.ItemSystemController:GetLocalEquipped()
-					if item and item.BulletEmitter then
-						item.BulletEmitter.IgnoreList = {workspace}
-					end
-					task.wait(0.1)
-				until not Wallbang.Enabled
-			else
-				restorefunction(jb.GunController.BulletEmitterOnLocalHitPlayer)
-			end
-		end,
-		Tooltip = 'Modifies bullets to always do headshot damage & shooting through most walls.'
-	})
-end)
-	
-run(function()
-	local AutoArrest = {Enabled = false}
+	local AutoArrest
 	
 	AutoArrest = vape.Categories.Blatant:CreateModule({
 		Name = 'AutoArrest',
@@ -581,6 +573,7 @@ run(function()
 							end
 						end
 					end
+	
 					task.wait(0.016)
 				until not AutoArrest.Enabled
 			end
@@ -592,7 +585,6 @@ end)
 run(function()
 	local AutoPop
 	local Range
-	local HandCheck
 	local TeamCheck
 	
 	local function getEntitiesInVehicle(car)
@@ -625,15 +617,15 @@ run(function()
 					local check = #entities > 0
 					if TeamCheck.Enabled then
 						for _, ent in entities do
-							if not ent.Targetable then 
-								check = false 
-								break 
+							if not ent.Targetable then
+								check = false
+								break
 							end
 						end
 					end
-					
-					if check then 
-						table.insert(allowed, car) 
+	
+					if check then
+						table.insert(allowed, car)
 					end
 				end
 			end
@@ -649,13 +641,14 @@ run(function()
 				task.spawn(function()
 					repeat
 						local item = jb.ItemSystemController:GetLocalEquipped()
-						if (not HandCheck.Enabled) or item and item.BulletEmitter then
+						if item and item.BulletEmitter and item.Model then
 							for _, car in getVehiclesNear() do
 								if not AutoPop.Enabled then break end
-								jb:FireServer('PopTires', car, 'Sniper')
+								jb:FireServer('PopTires', car, item.Model.Name)
 								task.wait(0.1)
 							end
 						end
+	
 						task.wait(0.016)
 					until not AutoPop.Enabled
 				end)
@@ -669,23 +662,23 @@ run(function()
 		Max = 600,
 		Default = 600
 	})
-	HandCheck = AutoPop:CreateToggle({Name = 'Hand Check'})
 	TeamCheck = AutoPop:CreateToggle({Name = 'Team Check'})
 end)
 	
 run(function()
-	local Punch = {Enabled = false}
+	local AutoPunch
 	
-	Punch = vape.Categories.Blatant:CreateModule({
+	AutoPunch = vape.Categories.Blatant:CreateModule({
 		Name = 'AutoPunch',
 		Function = function(callback)
 			if callback then
 				repeat
-					if entitylib.isAlive then 
-						jb:FireServer('Punch') 
+					if entitylib.isAlive then
+						jb:FireServer('Punch')
 					end
+	
 					task.wait(0.3)
-				until not Punch.Enabled
+				until not AutoPunch.Enabled
 			end
 		end,
 		Tooltip = 'Always punches people infront of you'
@@ -693,8 +686,8 @@ run(function()
 end)
 	
 run(function()
-	local AutoTaze = {Enabled = false}
-	local AutoTazeHandCheck = {Enabled = false}
+	local AutoTaze
+	local HandCheck
 	
 	AutoTaze = vape.Categories.Blatant:CreateModule({
 		Name = 'AutoTaze',
@@ -703,7 +696,7 @@ run(function()
 				repeat
 					local item = jb.ItemSystemController:GetLocalEquipped()
 					item = item and item.__ClassName == 'Taser' or nil
-					if not AutoTazeHandCheck.Enabled or item then
+					if not HandCheck.Enabled or item then
 						local ent = entitylib.EntityPosition({
 							Players = true,
 							Part = 'RootPart',
@@ -711,20 +704,21 @@ run(function()
 						})
 	
 						if ent and isIllegal(ent) and not isArrested(ent.Player.Name) then
-							if item then 
-								jb:FireServer('TaseReplicate', ent.Head.Position) 
+							if item then
+								jb:FireServer('TaseReplicate', ent.Head.Position)
 							end
 							jb:FireServer('Tase', ent.Humanoid, ent.Head, ent.Head.Position)
 							task.wait(10)
 						end
 					end
+	
 					task.wait(0.016)
 				until not AutoTaze.Enabled
 			end
 		end,
 		Tooltip = 'Immobilizes entities around you'
 	})
-	AutoTazeHandCheck = AutoTaze:CreateToggle({Name = 'Hand Check'})
+	HandCheck = AutoTaze:CreateToggle({Name = 'Hand Check'})
 end)
 	
 run(function()
@@ -735,7 +729,7 @@ run(function()
 	vape.Categories.Blatant:CreateModule({
 		Name = 'NoFall',
 		Function = function(callback)
-			debug.setconstant(debug.getupvalue(jb.FallingController.Init, 19), 9, callback and 'Archivable' or 'Sit')
+			debug.setconstant(debug.getupvalue(jb.FallingController.Init, 20), 9, callback and 'Archivable' or 'Sit')
 		end,
 		Tooltip = 'Disables ragdoll handling & fall damage'
 	})
@@ -751,6 +745,7 @@ run(function()
 			if callback then
 				oldnitro = nitrotable.Nitro
 				jb.VehicleController.updateSpdBarRatio(1)
+	
 				repeat
 					nitrotable.Nitro = 250
 					task.wait(0.1)
@@ -771,22 +766,6 @@ run(function()
 			debug.setconstant(jb.CircleAction.Press, 3, callback and 'Timeda' or 'Timed')
 		end,
 		Tooltip = 'Allows you to instantly complete ProximityPrompt actions'
-	})
-end)
-	
-run(function()
-	vape.Categories.Utility:CreateModule({
-		Name = 'KeySpoofer',
-		Function = function(callback)
-			if callback then
-				hookfunction(jb.PlayerUtils.hasKey, function() 
-					return true 
-				end)
-			else
-				restorefunction(jb.PlayerUtils.hasKey)
-			end
-		end,
-		Tooltip = 'Enables most doors to be walked through'
 	})
 end)
 	
