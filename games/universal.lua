@@ -47,9 +47,10 @@ local guiService = cloneref(game:GetService('GuiService'))
 local groupService = cloneref(game:GetService('GroupService'))
 local textChatService = cloneref(game:GetService('TextChatService'))
 local contextService = cloneref(game:GetService('ContextActionService'))
+local proximitypromptService = cloneref(game:GetService('ProximityPromptService'))
 local coreGui = cloneref(game:GetService('CoreGui'))
 
-local isnetworkowner = identifyexecutor and table.find({'AWP', 'Nihon'}, ({identifyexecutor()})[1]) and isnetworkowner or function()
+local isnetworkowner = identifyexecutor and table.find({'Volt', 'Synapse Z', 'Seliware','Nihon'}, ({identifyexecutor()})[1]) and isnetworkowner or function()
 	return true
 end
 local gameCamera = workspace.CurrentCamera or workspace:FindFirstChildWhichIsA('Camera')
@@ -968,6 +969,7 @@ run(function()
 				CircleObject = Drawing.new('Circle')
 				CircleObject.Filled = CircleFilled.Enabled
 				CircleObject.Color = Color3.fromHSV(CircleColor.Hue, CircleColor.Sat, CircleColor.Value)
+				CircleObject.Thickness = 1
 				CircleObject.Position = vape.gui.AbsoluteSize / 2
 				CircleObject.Radius = FOV.Value
 				CircleObject.NumSides = 100
@@ -1472,6 +1474,7 @@ run(function()
 				CircleObject.Filled = CircleFilled.Enabled
 				CircleObject.Color = Color3.fromHSV(CircleColor.Hue, CircleColor.Sat, CircleColor.Value)
 				CircleObject.Position = vape.gui.AbsoluteSize / 2
+				CircleObject.Thickness = 1
 				CircleObject.Radius = Range.Value
 				CircleObject.NumSides = 100
 				CircleObject.Transparency = 1 - CircleTransparency.Value
@@ -1774,6 +1777,7 @@ run(function()
 	
 				hook = function(packet)
 					if packet.AsArray[1] == 0x1b then
+						print(packet.PacketId, 0x1B)
 						local data = packet.AsBuffer
 						buffer.writeu32(data, 1, 0xFFFFFFFF)
 						packet:SetData(data)
@@ -1781,9 +1785,15 @@ run(function()
 				end
 	
 				raknet.add_send_hook(hook)
+				if entitylib.isAlive then
+					entitylib.character.RootPart.CFrame += Vector3.new(1/0, 1/0, 1/0)
+				end
 			elseif hook then
 				raknet.remove_send_hook(hook)
 				hook = nil
+				if entitylib.isAlive then
+					entitylib.character.RootPart.CFrame += Vector3.new(1/0, 1/0, 1/0)
+				end
 			end
 		end,
 		Tooltip = 'Prevent the server from replicating your current position to other players.'
@@ -3595,7 +3605,6 @@ run(function()
 			if callback then
 				setfflag('SimEnableStepPhysics', 'True')
 				setfflag('SimEnableStepPhysicsSelective', 'True')
-	
 				Timer:Clean(runService.RenderStepped:Connect(function(dt)
 					if Value.Value > 1 then
 						runService:Pause()
@@ -6188,8 +6197,8 @@ run(function()
 	})
 	Sort = AutoRejoin:CreateDropdown({
 		Name = 'Sort',
-		List = {'Rejoin', 'Descending', 'Ascending'},
-		Tooltip = 'Descending - Prefers full servers\nAscending - Prefers empty servers'
+		List = {'Current', 'Descending', 'Ascending'},
+		Tooltip = 'Current - Prefers current server\nDescending - Prefers full servers\nAscending - Prefers empty servers'
 	})
 end)
 	
@@ -6370,7 +6379,48 @@ run(function()
 		Tooltip = 'Disables GetPropertyChangedSignal detections for movement'
 	})
 end)
-	
+
+--[[ run(function()
+	local OrbitalStrike
+	local Total = 0
+	local Forces = {}
+
+	OrbitalStrike = vape.Categories.Utility:CreateModule({
+		Name = 'OrbitalStrike',
+		Function = function(callback)
+			if callback then
+				task.spawn(function()
+					for _, part in workspace:GetDescendants() do
+						if isnetworkowner(part) then
+							for i, v in part:GetChildren() do
+								if v:IsA('BodyPosition') or v:IsA('BodyGyro') then
+									v:Destroy()
+								end
+							end
+							local ForceInstance = Instance.new('BodyPosition')
+							ForceInstance.Parent = part
+							ForceInstance.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+							RocketTotal += 1
+							table.insert(Forces, ForceInstance)
+						end
+					end
+
+					notif('OrbitalStrike', 'Grabbed total ' .. Total .. ' of network objects', 5)
+					Total = 0
+
+					for _, v in Forces do
+						v.Position = lplr:GetMouse().Hit.p
+					end
+					table.clear(Forces)
+				end)
+
+				OrbitalStrike:Toggle()
+			end
+		end,
+		Tooltip = 'Sending any objects to specific position in the world. (Designed by CubicMetre)'
+	})
+end) ]]
+
 run(function()
 	vape.Categories.Utility:CreateModule({
 		Name = 'Panic',
@@ -6386,6 +6436,105 @@ run(function()
 		Tooltip = 'Disables all currently enabled modules'
 	})
 end)
+
+--[[if raknet and (raknet.add_send_hook and raknet.remove_send_hook) then
+	run(function()
+		local PositionManipulator
+		local Resync
+
+		local function rakhook(packet)
+			if packet.PacketId == 0x1B then
+				local data = packet.AsBuffer
+				buffer.writeu32(data, 1, 0xFFFFFFFF)
+				packet:SetData(data)
+			end
+		end
+
+		PositionManipulator = vape.Categories.Utility:CreateModule({
+			Name = 'PositionManipulator',
+			Function = function(callback)
+				if callback then
+					raknet.add_send_hook(rakhook)
+
+					if entitylib.isAlive then
+						lplr.Character.HumanoidRootPart.CFrame += Vector3.new(1/0, 1/0, 1/0)
+					end
+				else
+					raknet.remove_send_hook(rakhook)
+					if Resync.Enabled and entitylib.isAlive then
+						lplr.Character.HumanoidRootPart.CFrame += Vector3.new(1/0, 1/0, 1/0)
+					end
+				end
+			end,
+			ExtraText = function()
+				return 'Raknet'
+			end,
+			Tooltip = 'Fakes player position, makes you invisible and immortal.'
+		})
+		Resync = PositionManipulator:CreateToggle({
+			Name = 'Resync',
+			Default = true
+		})
+	end)
+end]]
+
+--[[
+run(function()
+	local PositionManipulator
+	local Reset
+	local old, old2, old3 = getfflag('WorldStepMax'), getfflag('WorldStepsOffsetAdjustRate'), getfflag('WorldStepDtAveExpFactorHundredth')
+
+	PositionManipulator = vape.Categories.Utility:CreateModule({
+		Name = 'PositionManipulator',
+		Function = function(callback)
+			if callback then
+				local newfflags = {
+					WorldStepMax = '-2147483648',
+					WorldStepsOffsetAdjustRate = '10000000',
+					WorldStepDtAveExpFactorHundredth = '1'
+				}
+
+				task.spawn(function()
+					repeat
+						setfflag('WorldStepMax', '-919237918232')
+						runService.PreSimulation:Wait()
+						setfflag('WorldStepMax', '-1')
+					until not PositionManipulator.Enabled
+				end)
+
+				for _, v in newfflags do
+					setfflag(_, v)
+				end
+
+				task.wait(1)
+
+				for _, v in {
+					WorldStepMax = '30',
+					WorldStepsOffsetAdjustRate = '2147483648',
+					WorldStepDtAveExpFactorHundredth = '10000000'
+				} do
+					setfflag(_, v)
+				end
+
+				if Reset.Enabled then
+					if entitylib.isAlive then
+						entitylib.character.Humanoid:ChangeState(Enum.HumanoidStateType.Dead)
+					end
+				end
+			else
+				setfflag('WorldStepMax', old)
+				setfflag('WorldStepsOffsetAdjustRate', old2)
+				setfflag('WorldStepDtAveExpFactorHundredth', old3)
+				notif('Vape', 'Please reset your character to disable the module', 5, 'info')
+			end
+		end,
+		Tooltip = 'Fakes player position, makes you invisible and immortal.'
+	})
+	Reset = PositionManipulator:CreateToggle({
+		Name = 'Auto Reset'
+	})
+end)
+--]]
 	
 run(function()
 	local Rejoin
@@ -6774,6 +6923,29 @@ run(function()
 			end
 		end,
 		Default = 192
+	})
+end)
+	
+run(function()
+	local InstantInteract
+
+	InstantInteract = vape.Categories.World:CreateModule({
+		Name = 'InstantInteract',
+		Function = function(callback)
+			if callback then
+				InstantInteract:Clean(proximitypromptService.PromptButtonHoldBegan:Connect(function(v)
+					local old = v
+					v.HoldDuration = 0
+
+					if fireproximityprompt then
+						fireproximityprompt(v)
+					end
+
+					v.HoldDuration = old.HoldDuration
+				end))
+			end
+		end,
+		Tooltip = 'Instantly interacts with prompt.'
 	})
 end)
 	
@@ -7655,19 +7827,18 @@ end)
 run(function()
 	local FOV
 	local Value
-	local oldfov
+	local old
 	
 	FOV = vape.Legit:CreateModule({
 		Name = 'FOV',
 		Function = function(callback)
 			if callback then
-				oldfov = gameCamera.FieldOfView
-				repeat
+				old = gameCamera.FieldOfView
+				FOV:Clean(runService.RenderStepped:Connect(function()
 					gameCamera.FieldOfView = Value.Value
-					task.wait()
-				until not FOV.Enabled
+				end))
 			else
-				gameCamera.FieldOfView = oldfov
+				gameCamera.FieldOfView = old
 			end
 		end,
 		Tooltip = 'Adjusts camera vision'
@@ -7956,6 +8127,233 @@ run(function()
 	corner.CornerRadius = UDim.new(0, 4)
 	corner.Parent = label
 end)
+
+--[[
+run(function()
+	local Shader
+	local Water
+	local WaterHeight
+	local changed = false
+	local lightingSettings = {}
+	local Objects = {}
+	local terrain = cloneref(workspace:FindFirstChildWhichIsA('Terrain'))
+	local Folder = Instance.new('Folder')
+	Folder.Parent = vape.gui
+
+	Shader = vape.Legit:CreateModule({
+		Name = 'Shader',
+		Function = function(callback)
+			if callback then
+				if vape.ThreadFix then
+					setthreadidentity(8)
+				end
+
+				for _, v in lightingService:GetChildren() do
+					v.Parent = Folder
+				end
+
+				task.spawn(function()
+					if Water.Enabled then
+						local lowestPart
+						local lowestSurface
+						local waterHeight = 50
+
+						if entitylib.isAlive then
+							for _, v in workspace:GetDescendants() do
+								if v:IsA('BasePart') and math.abs(v.Position.Y) < 2000 then
+									local regionBelow = Region3.new(
+										v.Position - Vector3.new(v.Size.X/2, 1, v.Size.Z/2),
+										v.Position - Vector3.new(-v.Size.X/2, 5, -v.Size.Z/2)
+									)
+									local partsBelow = workspace:FindPartsInRegion3(regionBelow, v, 1)
+							
+									local regionAbove = Region3.new(
+										v.Position + Vector3.new(-v.Size.X/2, 1, -v.Size.Z/2),
+										v.Position + Vector3.new(v.Size.X/2, 5, v.Size.Z/2)
+									)
+									local partsAbove = workspace:FindPartsInRegion3(regionAbove, v, 1)
+							
+									if #partsBelow == 0 and #partsAbove > 0 then
+										if not lowestPart or v.Position.Y < lowestPart.Position.Y then
+											lowestPart = v
+										end
+									end
+							
+									if #partsAbove == 0 then
+										if not lowestSurface or v.Position.Y < lowestSurface.Position.Y then
+											lowestSurface = v
+										end
+									end
+								end
+							end
+							
+							if lowestPart and lowestSurface then
+								local cframe = CFrame.new(
+									lowestPart.Position.X,
+									lowestPart.Position.Y - (waterHeight / 2),
+									lowestPart.Position.Z
+								)
+							
+								if lowestPart.Position.Y + (waterHeight / 2) > lowestSurface.Position.Y then
+									cframe = CFrame.new(
+										lowestPart.Position.X,
+										lowestSurface.Position.Y - (waterHeight / 2),
+										lowestPart.Position.Z
+									)
+								end
+							
+								terrain:FillBlock(cframe, Vector3.new(7000, waterHeight, 7000), Enum.Material.Water)
+								terrain.WaterColor = Color3.fromRGB(0, 5, 40)
+								terrain.WaterWaveSize = 1
+								terrain.WaterWaveSpeed = 25
+								terrain.WaterTransparency = 0.05
+							else
+								print(lowestPart,lowestSurface)
+							end
+						end
+					end
+				end)
+
+				for _, v in {
+					'Ambient',
+					'Brightness',
+					'ColorShift_Top',
+					'ColorShift_Bottom',
+					'ExposureCompensation',
+					'EnvironmentDiffuseScale',
+					'OutdoorAmbient'
+				} do
+					lightingSettings[v] = lightingService[v]
+				end
+
+				Shader:Clean(lightingService.Changed:Connect(function(v)
+					if lightingSettings[v] and not changed then
+						changed = true
+						lightingSettings[v] = lightingService[v]
+						lightingService.Ambient = Color3.fromRGB(20, 20, 20)
+						lightingService.Brightness = 2.5
+						lightingService.ColorShift_Top = Color3.fromRGB(206, 206, 206)
+						lightingService.ColorShift_Bottom = Color3.fromRGB(231, 231, 231)
+						lightingService.ExposureCompensation = -0.5
+						lightingService.EnvironmentDiffuseScale = 0.15
+						lightingService.EnvironmentSpecularScale = 0.25
+						lightingService.OutdoorAmbient = Color3.fromRGB(30, 30, 30)
+						changed = false
+					end
+				end))
+
+				lightingService.Ambient = Color3.fromRGB(20, 20, 20)
+				lightingService.Brightness = 2.5
+				lightingService.ColorShift_Top = Color3.fromRGB(206, 206, 206)
+				lightingService.ColorShift_Bottom = Color3.fromRGB(231, 231, 231)
+				lightingService.ExposureCompensation = -0.5
+				lightingService.EnvironmentDiffuseScale = 0.15
+				lightingService.EnvironmentSpecularScale = 0.25
+				lightingService.OutdoorAmbient = Color3.fromRGB(30, 30, 30)
+
+				Objects.Atmosphere = Instance.new('Atmosphere')
+				Objects.Atmosphere.Color = Color3.fromRGB(103, 103, 103)
+				Objects.Atmosphere.Decay = Color3.fromRGB(80, 80, 80)
+				Objects.Atmosphere.Density = 0.3
+				Objects.Atmosphere.Glare = 0.8
+				Objects.Atmosphere.Haze = 0
+				Objects.Atmosphere.Offset = 0
+
+				Objects.Sky = Instance.new('Sky')
+				Objects.Sky.CelestialBodiesShown = true
+				Objects.Sky.SkyboxBk = 'http://www.roblox.com/asset/?id=245710263'
+				Objects.Sky.SkyboxDn = 'http://www.roblox.com/asset/?id=245710630'
+				Objects.Sky.SkyboxFt = 'http://www.roblox.com/asset/?id=245710380'
+				Objects.Sky.SkyboxLf = 'http://www.roblox.com/asset/?id=245710319'
+				Objects.Sky.SkyboxRt = 'http://www.roblox.com/asset/?id=245710230'
+				Objects.Sky.SkyboxUp = 'http://www.roblox.com/asset/?id=245710496'
+
+				Objects.Bloom = Instance.new('BloomEffect')
+				Objects.Bloom.Intensity = 1
+				Objects.Bloom.Size = 56
+				Objects.Bloom.Threshold = 0.5
+
+				Objects.Bloom2 = Instance.new('BloomEffect')
+				Objects.Bloom2.Intensity = 0
+				Objects.Bloom2.Size = 120
+				Objects.Bloom2.Threshold = 1
+
+				Objects.ColorCorrection = Instance.new('ColorCorrectionEffect')
+				Objects.ColorCorrection.Brightness = 0.15
+				Objects.ColorCorrection.Contrast = 0.5
+				Objects.ColorCorrection.Saturation = 0.2
+				Objects.ColorCorrection.TintColor = Color3.fromRGB(255, 245, 231)
+				Objects.ColorCorrection.Enabled = false
+
+				Objects.ColorCorrection2 = Instance.new('ColorCorrectionEffect')
+				Objects.ColorCorrection2.Brightness = 0.1
+				Objects.ColorCorrection2.Contrast = 0.3
+				Objects.ColorCorrection2.Saturation = -0.2
+
+				Objects.ColorCorrection3 = Instance.new('ColorCorrectionEffect')
+				Objects.ColorCorrection3.Brightness = 0
+				Objects.ColorCorrection3.Contrast = 0.05
+				Objects.ColorCorrection3.Saturation = 0
+				Objects.ColorCorrection3.TintColor = Color3.fromRGB(255,255,255)
+
+				Objects.DepthOfField = Instance.new('DepthOfFieldEffect')
+				Objects.DepthOfField.FarIntensity = 0.1
+				Objects.DepthOfField.InFocusRadius = 30
+
+				Objects.SunRays = Instance.new('SunRaysEffect')
+
+				Objects.SunRays2 = Instance.new('SunRaysEffect')
+				Objects.SunRays2.Intensity = 0.2
+				Objects.SunRays2.Spread = 0.2
+
+				Objects.SunRays3 = Instance.new('SunRaysEffect')
+				Objects.SunRays3.Intensity = 0.04
+				Objects.SunRays3.Spread = 1
+
+				for _, v in Objects do
+					v.Parent = lightingService
+				end
+			else
+				for _, v in Objects do
+					v:Destroy()
+				end
+
+				for _, v in Folder:GetChildren() do
+					v.Parent = lightingService
+				end
+
+				for _, v in lightingSettings do
+					lightingService[_] = v
+				end
+
+				if Water.Enabled then
+					if lowestPart and lowestSurface then
+						local cframe = CFrame.new(
+							lowestPart.Position.X,
+							lowestPart.Position.Y - (waterHeight / 2),
+							lowestPart.Position.Z
+						)
+					
+						if lowestPart.Position.Y + (waterHeight / 2) > lowestSurface.Position.Y then
+							cframe = CFrame.new(
+								lowestPart.Position.X,
+								lowestSurface.Position.Y - (waterHeight / 2),
+								lowestPart.Position.Z
+							)
+						end
+					
+						terrain:FillBlock(cframe, Vector3.new(7000, waterHeight, 7000), Enum.Material.Air)
+					end
+				end
+
+				table.clear(Objects)
+			end
+		end
+	})
+	Water = Shader:CreateToggle({
+		Name = 'Water'
+	})
+end)]]
 	
 run(function()
 	local SongBeats
@@ -8168,3 +8566,9 @@ run(function()
 		end
 	})
 end)
+
+-- task.wait(0.1)
+-- loadstring(readfile('newvapeud/libraries/whitelist.lua'), 'whitelist')()
+-- if vape.__loaded_catwhitelist then
+-- 	vape:CreateNotification('Vape', 'Loaded catvape whitelist', 5, 'info')
+-- end

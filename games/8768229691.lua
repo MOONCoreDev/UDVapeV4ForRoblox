@@ -529,6 +529,8 @@ run(function()
 	
 	local function velocityFunction(velo, ...)
 		if rand:NextNumber(0, 100) > Chance.Value then return end
+
+		local args = table.pack(...)
 		local check = (not Targeting.Enabled) or entitylib.EntityPosition({
 			Range = 50,
 			Part = 'RootPart',
@@ -538,10 +540,10 @@ run(function()
 		if check then
 			local hort, vert = (Horizontal.Value / 100), (Vertical.Value / 100)
 			if hort == 0 and vert == 0 then return end
-			velo = Vector3.new(velo.X * hort, velo.Y * vert, velo.Z * hort)
+			args[1] = Vector3.new(args[1].X * hort, args[1].Y * vert, args[1].Z * hort)
 		end
 	
-		return old(velo, ...)
+		return old(unpack(args, 1, args.n))
 	end
 	
 	Velocity = vape.Categories.Combat:CreateModule({
@@ -1779,7 +1781,7 @@ run(function()
 				ViewmodelMotor = Instance.new('Motor6D')
 				vape:Clean(ViewmodelMotor)
 				vape:Clean(runService.RenderStepped:Connect(function()
-					if ViewmodelTool then 
+					if ViewmodelTool then
 						local dcf = ((CFrame.new(2.06, -2.44, -2.24) * CFrame.new(0.6, -0.2, -0.6)) * CFrame.Angles(math.rad(99), math.rad(2), math.rad(-4))) * ViewmodelMotor.C0
 						local offsetcf = (CFrame.new(0, -0.15, -1.56) * CFrame.Angles(math.rad(-90), math.rad(-90), 0))
 						ViewmodelTool.CFrame = ((gameCamera.CFrame * dcf) * offsetcf)
