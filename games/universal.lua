@@ -3911,7 +3911,7 @@ run(function()
 		Function = function(hue, sat, val)
 			for i, v in Reference do
 				if type(v) ~= 'table' then
-					v.OutlineColor = entitylib.getEntityColor(i) or Color3.fromHSV(hue, sat, val)
+					v.OutlineColor = Color3.fromHSV(hue, sat, val)
 				end
 			end
 		end,

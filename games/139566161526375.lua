@@ -20,8 +20,6 @@ local store = {
 	serverBlocks = {}
 }
 
-local placeTick = tick()
-
 local function getTool()
 	return lplr.Character and lplr.Character:FindFirstChildWhichIsA('Tool', true) or nil
 end
@@ -117,6 +115,7 @@ run(function()
 					if tool and inputService:IsMouseButtonPressed(0) then
 						tool:Activate()
 					end
+	
 					task.wait(1 / CPS.GetRandomValue())
 				until not AutoClicker.Enabled
 			end
@@ -133,47 +132,50 @@ run(function()
 end)
 	
 run(function()
-	local old
+	--[[local old
 	
 	vape.Categories.Combat:CreateModule({
 		Name = 'Reach',
 		Function = function(callback)
 			if callback then
-				old = rawget(bd.CombatConstants, 'REACH_IN_STUDS')
-				rawset(bd.CombatConstants, 'REACH_IN_STUDS', 18)
-				rawset(bd.Entity.LocalEntity, 'Reach', 18)
+				--old = rawget(bd.CombatConstants, 'REACH_IN_STUDS')
+				--rawset(bd.CombatConstants, 'REACH_IN_STUDS', 18)
+				--rawset(bd.Entity.LocalEntity, 'Reach', 18)
 			else
-				rawset(bd.CombatConstants, 'REACH_IN_STUDS', old)
-				rawset(bd.Entity.LocalEntity, 'Reach', old)
-				old = nil
+				--rawset(bd.CombatConstants, 'REACH_IN_STUDS', old)
+				--rawset(bd.Entity.LocalEntity, 'Reach', old)
+				--old = nil
 			end
 		end,
 		Tooltip = 'Extends attack reach'
-	})
+	})]]
 end)
 	
 run(function()
-	local Velocity = {Enabled = false}
-	local VelocityHorizontal = {Value = 100}
-	local VelocityVertical = {Value = 100}
-	local VelocityChance = {Value = 100}
-	local VelocityTargeting = {Enabled = false}
-	local applyKnockback
+	local Velocity
+	local Horizontal
+	local Vertical
+	local Chance
+	local Targeting
+	local old
 	local connection
 	
 	local function velocityFunction(velo, ...)
-		if Random.new():NextNumber(0, 100) > VelocityChance.Value then return end
-		local check = (not VelocityTargeting.Enabled) or entitylib.EntityPosition({
+		if Random.new():NextNumber(0, 100) > Chance.Value then return old(velo, ...) end
+	
+		local check = (not Targeting.Enabled) or entitylib.EntityPosition({
 			Range = 50,
 			Part = 'RootPart',
 			Players = true
 		})
+	
 		if check then
-			local hort, vert = (VelocityHorizontal.Value / 100), (VelocityVertical.Value / 100)
+			local hort, vert = (Horizontal.Value / 100), (Vertical.Value / 100)
 			if hort == 0 and vert == 0 then return end
 			velo = Vector3.new(velo.X * hort, velo.Y * vert, velo.Z * hort)
 		end
-		return applyKnockback(velo, ...)
+	
+		return old(velo, ...)
 	end
 	
 	Velocity = vape.Categories.Combat:CreateModule({
@@ -182,56 +184,56 @@ run(function()
 			if callback then
 				connection = getconnections(bd.CombatService.KnockBackApplied._re.OnClientEvent)[1]
 				if not connection then return end
-				applyKnockback = hookfunction(connection.Function, function(...)
+	
+				old = hookfunction(connection.Function, function(...)
 					return velocityFunction(...)
 				end)
 			else
-				if applyKnockback then hookfunction(connection.Function, applyKnockback) end
+				if old then
+					hookfunction(connection.Function, old)
+				end
 				connection = nil
 			end
 		end,
 		Tooltip = 'Reduces knockback taken'
 	})
-	VelocityHorizontal = Velocity:CreateSlider({
+	Horizontal = Velocity:CreateSlider({
 		Name = 'Horizontal',
 		Min = 0,
 		Max = 100,
 		Default = 0,
 		Suffix = '%'
 	})
-	VelocityVertical = Velocity:CreateSlider({
+	Vertical = Velocity:CreateSlider({
 		Name = 'Vertical',
 		Min = 0,
 		Max = 100,
 		Default = 0,
 		Suffix = '%'
 	})
-	VelocityChance = Velocity:CreateSlider({
+	Chance = Velocity:CreateSlider({
 		Name = 'Chance',
 		Min = 0,
 		Max = 100,
 		Default = 100,
 		Suffix = '%'
 	})
-	VelocityTargeting = Velocity:CreateToggle({Name = 'Only when targeting'})
+	Targeting = Velocity:CreateToggle({Name = 'Only when targeting'})
 end)
 	
 run(function()
-	local Criticals
 	local old
-	local Chance
 	
-	Criticals = vape.Categories.Blatant:CreateModule({
+	vape.Categories.Blatant:CreateModule({
 		Name = 'Criticals',
 		Function = function(callback)
-			if callback then 
+			if callback then
 				old = hookfunction(bd.Blink.item_action.attack_entity.fire, function(...)
-					if Random.new():NextNumber(0, 100) > Chance.Value then return old(...) end
 					local data = ...
-					if type(data) == 'table' then 
+					if type(data) == 'table' then
 						rawset(data, 'is_crit', true)
 					end
-
+	
 					return old(...)
 				end)
 			else
@@ -240,13 +242,6 @@ run(function()
 			end
 		end,
 		Tooltip = 'Always hit criticals'
-	})
-	Chance = Criticals:CreateSlider({
-		Name = 'Chance',
-		Min = 0,
-		Max = 100,
-		Default = 100,
-		Suffix = '%'
 	})
 end)
 	
@@ -261,15 +256,19 @@ run(function()
 					if select(2, ...) == 'MenuOpen' then
 						return
 					end
+	
 					return old(...)
 				end)
+	
 				bd.MovementController:RemoveSpeedOverride('MenuOpen')
 			else
-				hookfunction(bd.MovementController.AddSpeedOverride, old)
-				old = nil
+				if old then
+					hookfunction(bd.MovementController.AddSpeedOverride, old)
+					old = nil
+				end
 			end
 		end,
-		Tooltip = 'Prevents slowing down when using items.'
+		Tooltip = 'Allows you to have continuous movement in menus'
 	})
 end)
 	
@@ -321,6 +320,7 @@ run(function()
 				repeat
 					local tool = getAttackData()
 					local attacked = {}
+	
 					if tool and tool:HasTag('Sword') then
 						local plrs = entitylib.AllPosition({
 							Range = SwingRange.Value,
@@ -375,9 +375,10 @@ run(function()
 											is_crit = entitylib.character.RootPart.AssemblyLinearVelocity.Y < 0,
 											weapon_name = tool.Name,
 											extra = {
-												rizz = 'No.',
-												sigma = 'The...',
-												those = workspace.Name == 'Ok'
+												rizz = 'Bro.',
+												owo = 'What\'s this? OwO',
+												those = nil,
+												those = workspace.Name == 'Okay'
 											}
 										})
 									end
@@ -626,14 +627,17 @@ run(function()
 	vape.Categories.Blatant:CreateModule({
 		Name = 'NoSlowdown',
 		Function = function(callback)
-			local func = debug.getproto(bd.MovementController.KnitStart, 5)
+			local func = debug.getproto(bd.MovementController.KnitStart, 7)
+	
 			if callback then
-				old = debug.getconstants(debug.getproto(bd.MovementController.KnitStart, 5))
-				for i, v in old do 
-					debug.setconstant(func, i, v == 'IsSneaking' and v or 'IsSpectating')
+				old = debug.getconstants(func)
+				for i, v in old do
+					if type(v) == 'string' and (v:find('Client') or v == 'IsChargingBow') and v ~= 'ClientSneaking' then
+						debug.setconstant(func, i, 'IsSpectating')
+					end
 				end
 			else
-				for i, v in old do 
+				for i, v in old do
 					debug.setconstant(func, i, v)
 				end
 				table.clear(old)
@@ -716,35 +720,7 @@ run(function()
 		Tooltip = 'Automatically queues after the match ends.'
 	})
 end)
-
-run(function()
-	local FastPlace
-	local Delay
-
-	FastPlace = vape.Categories.Utility:CreateModule({
-		Name = 'FastPlace',
-		Function = function(callback)
-			if callback then
-				repeat
-					local tool = getTool()
-					if tool and tool:HasTag('Blocks') and inputService:IsMouseButtonPressed(0) then
-						tool:Activate()
-					end
-					task.wait(Delay.GetRandomValue())
-				until not FastPlace.Enabled
-			end
-		end
-	})
-	Delay = FastPlace:CreateTwoSlider({
-		Name = 'Delay',
-		Min = 0,
-		Max = 1,
-		Decimal = 100,
-		DefaultMin = 0.03,
-		DefaultMax = 0.1
-	})
-end)
-
+	
 run(function()
 	local Scaffold
 	local Expand
@@ -878,8 +854,9 @@ run(function()
 												position = blockpos,
 												block_type = btype,
 												extra = {
-													rizz = 'No.',
-													sigma = 'The...',
+													rizz = 'Bro.',
+													owo = 'What\'s this? OwO',
+													those = nil,
 													those = workspace.Name == 'Ok'
 												}
 											})
@@ -1181,6 +1158,7 @@ run(function()
 							end
 						end
 					end
+	
 					task.wait(1 / 60)
 				until not Breaker.Enabled
 			end

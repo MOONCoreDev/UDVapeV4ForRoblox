@@ -527,9 +527,9 @@ run(function()
 	local connection
 	local rand, old = Random.new()
 	
-	local function velocityFunction(velo, ...)
-		if rand:NextNumber(0, 100) > Chance.Value then return end
-
+	local function velocityFunction(...)
+		if rand:NextNumber(0, 100) > Chance.Value then return old(...) end
+	
 		local args = table.pack(...)
 		local check = (not Targeting.Enabled) or entitylib.EntityPosition({
 			Range = 50,
@@ -692,7 +692,7 @@ run(function()
 				old = nil
 			end
 		end,
-		Tooltip = 'Allows you to continuous movement in menus'
+		Tooltip = 'Allows you to have continuous movement in menus'
 	})
 end)
 	
